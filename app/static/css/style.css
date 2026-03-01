@@ -1,0 +1,149 @@
+/* Custom styles for Money Tracker */
+:root {
+    --nav-brand-color: #2ecc71;
+    --warning-color: #f39c12;
+}
+
+[data-theme="dark"] {
+    --nav-brand-color: #27ae60;
+    --warning-color: #f1c40f;
+}
+
+/* Navigation */
+nav {
+    padding: 0.5rem 0;
+}
+
+nav a.active {
+    font-weight: bold;
+    border-bottom: 2px solid var(--primary);
+}
+
+.nav-brand {
+    font-size: 1.2rem;
+    color: var(--nav-brand-color) !important;
+}
+
+/* Small buttons */
+.small-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.notification.success {
+    background: #27ae60;
+    color: white;
+}
+
+.notification.error {
+    background: #e74c3c;
+    color: white;
+}
+
+.notification.info {
+    background: #3498db;
+    color: white;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Cards */
+article > header {
+    font-weight: 600;
+}
+
+#card-income h3 { color: var(--ins-color); }
+#card-expense h3 { color: var(--del-color); }
+
+/* Budget progress */
+.budget-alert {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--muted-border-color);
+}
+
+.budget-alert:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Category items */
+.category-item:hover {
+    background: var(--card-sectionning-background-color);
+}
+
+/* Theme toggle */
+#theme-toggle {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    background: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* Tables */
+table {
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    nav ul {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    nav ul li a {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    table {
+        font-size: 0.8rem;
+    }
+
+    .small-btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Dialog/Modal improvements */
+dialog article {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Drop zone hover */
+#drop-zone:hover {
+    border-color: var(--primary);
+}
+
+/* Progress bar custom color support */
+progress {
+    height: 0.75rem;
+}

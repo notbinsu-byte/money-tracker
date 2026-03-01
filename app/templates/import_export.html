@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% set active_page = "import-export" %}
+{% block title %}Import / Export - Money Tracker{% endblock %}
+
+{% block content %}
+<h2>Import / Export</h2>
+
+<div class="grid">
+    <article>
+        <header>Export Transactions</header>
+        <p>Download your transactions as a CSV file.</p>
+        <div class="grid">
+            <select id="export-type">
+                <option value="">All Types</option>
+                <option value="expense">Expenses Only</option>
+                <option value="income">Income Only</option>
+            </select>
+            <button onclick="exportCSV()">Download CSV</button>
+        </div>
+    </article>
+    <article>
+        <header>Download Template</header>
+        <p>Get a blank CSV template for importing transactions.</p>
+        <button class="secondary" onclick="downloadTemplate()">Download Template</button>
+    </article>
+</div>
+
+<article>
+    <header>Import Transactions</header>
+    <p>Upload a CSV file to import transactions. Use the template for correct formatting.</p>
+    <div id="drop-zone" style="border:2px dashed var(--muted-border-color);border-radius:8px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;"
+         ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+         ondragleave="this.style.borderColor='var(--muted-border-color)'"
+         ondrop="handleDrop(event)">
+        <p>Drag & drop a CSV file here, or click to browse</p>
+        <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="previewFile()">
+        <button class="outline" onclick="document.getElementById('csv-file').click()">Choose File</button>
+    </div>
+    <div id="import-preview" style="display:none;">
+        <h4>Preview</h4>
+        <div id="preview-content"></div>
+        <div id="import-errors" style="display:none;color:var(--del-color);margin:1rem 0;"></div>
+        <button id="import-btn" onclick="importCSV()">Import</button>
+    </div>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportCSV() {
+    const type = document.getElementById('export-type').value;
+    const url = type ? `/api/v1/csv/export?type=${type}` : '/api/v1/csv/export';
+    window.location.href = url;
+}
+
+function downloadTemplate() {
+    window.location.href = '/api/v1/csv/template';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = 'var(--muted-border-color)';
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+        document.getElementById('csv-file').files = e.dataTransfer.files;
+        previewFile();
+    } else {
+        notify('Please drop a CSV file', 'error');
+    }
+}
+
+async function previewFile() {
+    const file = document.getElementById('csv-file').files[0];
+    if (!file) return;
+    const text = await file.text();
+    const lines = text.trim().split('\n');
+    const preview = document.getElementById('preview-content');
+
+    if (lines.length <= 1) {
+        preview.innerHTML = '<p>File appears empty</p>';
+        return;
+    }
+
+    const headers = lines[0].split(',');
+    let html = `<p>${lines.length - 1} row(s) found</p>`;
+    html += '<figure><table><thead><tr>';
+    headers.forEach(h => { html += `<th>${escapeHtml(h.trim())}</th>`; });
+    html += '</tr></thead><tbody>';
+    for (let i = 1; i < Math.min(lines.length, 6); i++) {
+        html += '<tr>';
+        lines[i].split(',').forEach(cell => { html += `<td>${escapeHtml(cell.trim())}</td>`; });
+        html += '</tr>';
+    }
+    if (lines.length > 6) html += `<tr><td colspan="${headers.length}" style="text-align:center;">... and ${lines.length - 6} more rows</td></tr>`;
+    html += '</tbody></table></figure>';
+    preview.innerHTML = html;
+    document.getElementById('import-preview').style.display = 'block';
+}
+
+async function importCSV() {
+    const file = document.getElementById('csv-file').files[0];
+    if (!file) return;
+    document.getElementById('import-errors').style.display = 'none';
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const resp = await fetch('/api/v1/csv/import', { method: 'POST', body: formData });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ detail: 'Import failed' }));
+            notify(err.detail || 'Import failed', 'error');
+            return;
+        }
+        const result = await resp.json();
+        if (result.success) {
+            notify(`Successfully imported ${result.imported} transaction(s)`, 'success');
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('csv-file').value = '';
+        } else {
+            const errDiv = document.getElementById('import-errors');
+            errDiv.style.display = 'block';
+            errDiv.innerHTML = '<strong>Errors found:</strong><ul>' + result.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('') + '</ul>';
+        }
+    } catch(e) {
+        notify('Import failed', 'error');
+    }
+}
+</script>
+{% endblock %}

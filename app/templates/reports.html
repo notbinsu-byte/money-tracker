@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% set active_page = "reports" %}
+{% block title %}Reports - Money Tracker{% endblock %}
+
+{% block content %}
+<h2>Reports</h2>
+
+<div class="grid" style="margin-bottom:1rem;">
+    <select id="report-year" onchange="loadReports()"></select>
+    <select id="report-month" onchange="loadReports()">
+        <option value="1">January</option><option value="2">February</option>
+        <option value="3">March</option><option value="4">April</option>
+        <option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option>
+        <option value="9">September</option><option value="10">October</option>
+        <option value="11">November</option><option value="12">December</option>
+    </select>
+</div>
+
+<div class="grid">
+    <article>
+        <header>Monthly Summary</header>
+        <div id="monthly-summary"></div>
+    </article>
+    <article>
+        <header>Expense by Category</header>
+        <canvas id="report-pie" style="max-height:300px;"></canvas>
+        <p id="report-no-data" style="display:none;text-align:center;color:var(--muted-color);">No data</p>
+    </article>
+</div>
+
+<div class="grid">
+    <article>
+        <header>Income vs Expenses (Monthly Trend)</header>
+        <canvas id="report-bar" style="max-height:300px;"></canvas>
+    </article>
+    <article>
+        <header>Net Income Trend</header>
+        <canvas id="report-line" style="max-height:300px;"></canvas>
+    </article>
+</div>
+
+<article>
+    <header>Category Breakdown</header>
+    <div id="category-table"></div>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+let reportCharts = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    const yearSelect = document.getElementById('report-year');
+    for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 1; y++) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        if (y === now.getFullYear()) opt.selected = true;
+        yearSelect.appendChild(opt);
+    }
+    document.getElementById('report-month').value = now.getMonth() + 1;
+    loadReports();
+});
+
+async function loadReports() {
+    const year = document.getElementById('report-year').value;
+    const month = document.getElementById('report-month').value;
+
+    // Monthly summary
+    try {
+        const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
+        document.getElementById('monthly-summary').innerHTML = `
+            <table>
+                <tr><td>Income</td><td style="text-align:right;color:var(--ins-color);">${formatCurrency(summary.totals.income)}</td></tr>
+                <tr><td>Expenses</td><td style="text-align:right;color:var(--del-color);">${formatCurrency(summary.totals.expense)}</td></tr>
+                <tr><td><strong>Net</strong></td><td style="text-align:right;"><strong>${formatCurrency(summary.totals.net)}</strong></td></tr>
+            </table>`;
+
+        // Category pie
+        if (summary.expense_breakdown && summary.expense_breakdown.length > 0) {
+            document.getElementById('report-pie').style.display = 'block';
+            document.getElementById('report-no-data').style.display = 'none';
+            if (reportCharts.pie) reportCharts.pie.destroy();
+            reportCharts.pie = renderPieChart('report-pie', summary.expense_breakdown);
+        } else {
+            document.getElementById('report-pie').style.display = 'none';
+            document.getElementById('report-no-data').style.display = 'block';
+        }
+
+        // Category table
+        const all = [...(summary.expense_breakdown || []), ...(summary.income_breakdown || [])];
+        if (all.length > 0) {
+            document.getElementById('category-table').innerHTML = `<table>
+                <thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
+                <tbody>${all.map(c => `<tr><td>${escapeHtml(c.category_icon)} ${escapeHtml(c.category_name)}</td><td style="text-align:right;">${formatCurrency(c.total)}</td></tr>`).join('')}</tbody>
+            </table>`;
+        } else {
+            document.getElementById('category-table').innerHTML = '<p style="text-align:center;color:var(--muted-color);">No data for this period</p>';
+        }
+    } catch(e) { console.error(e); }
+
+    // Yearly trend
+    try {
+        const yearly = await api.get(`/api/v1/reports/yearly-summary?year=${year}`);
+        if (reportCharts.bar) reportCharts.bar.destroy();
+        reportCharts.bar = renderBarChart('report-bar', yearly.monthly_data);
+        if (reportCharts.line) reportCharts.line.destroy();
+        reportCharts.line = renderLineChart('report-line', yearly.monthly_data);
+    } catch(e) { console.error(e); }
+}
+</script>
+{% endblock %}

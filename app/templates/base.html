@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Money Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><a href="/" class="nav-brand"><strong>Money Tracker</strong></a></li>
+        </ul>
+        <ul>
+            <li><a href="/" class="{% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+            <li><a href="/transactions" class="{% if active_page == 'transactions' %}active{% endif %}">Transactions</a></li>
+            <li><a href="/categories" class="{% if active_page == 'categories' %}active{% endif %}">Categories</a></li>
+            <li><a href="/budgets" class="{% if active_page == 'budgets' %}active{% endif %}">Budgets</a></li>
+            <li><a href="/recurring" class="{% if active_page == 'recurring' %}active{% endif %}">Recurring</a></li>
+            <li><a href="/reports" class="{% if active_page == 'reports' %}active{% endif %}">Reports</a></li>
+            <li><a href="/import-export" class="{% if active_page == 'import-export' %}active{% endif %}">Import/Export</a></li>
+            <li>
+                <button id="theme-toggle" class="outline" onclick="toggleTheme()" title="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="notification" class="notification" style="display:none;"></div>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <hr>
+        <p><small>Money Tracker &copy; 2025</small></p>
+    </footer>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

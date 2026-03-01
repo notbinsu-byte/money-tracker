@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% set active_page = "transactions" %}
+{% block title %}Transactions - Money Tracker{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <h2>Transactions</h2>
+    <button onclick="openAddModal()">+ Add Transaction</button>
+</div>
+
+<!-- Filters -->
+<details>
+    <summary>Filters</summary>
+    <div class="grid">
+        <input type="search" id="filter-search" placeholder="Search descriptions..." oninput="debouncedSearch()">
+        <select id="filter-type" onchange="currentPage=1; loadTransactions()">
+            <option value="">All Types</option>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+        </select>
+        <select id="filter-category" onchange="currentPage=1; loadTransactions()">
+            <option value="">All Categories</option>
+        </select>
+    </div>
+    <div class="grid">
+        <input type="date" id="filter-date-from" onchange="currentPage=1; loadTransactions()">
+        <input type="date" id="filter-date-to" onchange="currentPage=1; loadTransactions()">
+        <input type="number" id="filter-amount-min" placeholder="Min amount" step="0.01" onchange="currentPage=1; loadTransactions()">
+        <input type="number" id="filter-amount-max" placeholder="Max amount" step="0.01" onchange="currentPage=1; loadTransactions()">
+    </div>
+</details>
+
+<!-- Transactions Table -->
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th style="cursor:pointer;" onclick="sortBy('date')">Date <span id="sort-date">▼</span></th>
+                <th>Category</th>
+                <th>Description</th>
+                <th style="cursor:pointer;text-align:right;" onclick="sortBy('amount')">Amount <span id="sort-amount"></span></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="transactions-body">
+            <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+        </tbody>
+    </table>
+</figure>
+
+<!-- Pagination -->
+<div id="pagination" style="display:flex;justify-content:center;gap:0.5rem;"></div>
+
+<!-- Add/Edit Modal -->
+<dialog id="transaction-modal">
+    <article style="min-width:min(500px,90vw);">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+            <h3 id="modal-title">Add Transaction</h3>
+        </header>
+        <form id="transaction-form" onsubmit="saveTransaction(event)">
+            <input type="hidden" id="tx-id">
+            <div class="grid">
+                <label>
+                    Type
+                    <select id="tx-type" required onchange="loadCategoryOptions()">
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </label>
+                <label>
+                    Amount
+                    <input type="number" id="tx-amount" step="0.01" min="0.01" required>
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Date
+                    <input type="date" id="tx-date" required>
+                </label>
+                <label>
+                    Category
+                    <select id="tx-category" required></select>
+                </label>
+            </div>
+            <label>
+                Description
+                <input type="text" id="tx-description" maxlength="500" required>
+            </label>
+            <label>
+                Currency
+                <select id="tx-currency"></select>
+            </label>
+            <label>
+                Notes
+                <textarea id="tx-notes" rows="2"></textarea>
+            </label>
+            <button type="submit">Save</button>
+        </form>
+    </article>
+</dialog>
+
+<!-- Delete Confirmation -->
+<dialog id="delete-modal">
+    <article>
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('delete-modal').close()"></button>
+            <h3>Confirm Delete</h3>
+        </header>
+        <p>Are you sure you want to delete this transaction?</p>
+        <footer>
+            <button class="secondary" onclick="document.getElementById('delete-modal').close()">Cancel</button>
+            <button class="contrast" id="confirm-delete-btn">Delete</button>
+        </footer>
+    </article>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSort = 'date';
+let currentOrder = 'desc';
+let currentPage = 1;
+let allCategories = [];
+const debouncedSearch = debounce(() => { currentPage = 1; loadTransactions(); }, 300);
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories();
+    await loadTransactions();
+    await loadCurrencies();
+    document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+});
+
+async function loadCategories() {
+    allCategories = await api.get('/api/v1/categories');
+    const filterSelect = document.getElementById('filter-category');
+    filterSelect.innerHTML = '<option value="">All Categories</option>';
+    allCategories.forEach(c => {
+        filterSelect.innerHTML += `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`;
+    });
+    loadCategoryOptions();
+}
+
+function loadCategoryOptions() {
+    const type = document.getElementById('tx-type').value;
+    const select = document.getElementById('tx-category');
+    select.innerHTML = '';
+    allCategories.filter(c => c.type === type).forEach(c => {
+        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`;
+    });
+}
+
+async function loadCurrencies() {
+    try {
+        const data = await api.get('/api/v1/currencies');
+        const select = document.getElementById('tx-currency');
+        select.innerHTML = '';
+        data.currencies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            if (c === data.base) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch(e) {
+        document.getElementById('tx-currency').innerHTML = '<option value="USD">USD</option>';
+    }
+}
+
+async function loadTransactions() {
+    const params = new URLSearchParams();
+    const search = document.getElementById('filter-search').value;
+    const type = document.getElementById('filter-type').value;
+    const category = document.getElementById('filter-category').value;
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+    const amountMin = document.getElementById('filter-amount-min').value;
+    const amountMax = document.getElementById('filter-amount-max').value;
+
+    if (search) params.set('search', search);
+    if (type) params.set('type', type);
+    if (category) params.set('category_id', category);
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo) params.set('date_to', dateTo);
+    if (amountMin) params.set('amount_min', amountMin);
+    if (amountMax) params.set('amount_max', amountMax);
+    params.set('sort_by', currentSort);
+    params.set('sort_order', currentOrder);
+    params.set('page', currentPage);
+    params.set('per_page', '20');
+
+    try {
+        const data = await api.get(`/api/v1/transactions?${params}`);
+        const tbody = document.getElementById('transactions-body');
+
+        if (data.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No transactions found</td></tr>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = data.items.map(t => `
+            <tr>
+                <td>${formatDate(t.date)}</td>
+                <td><span style="color:${t.category_color || '#666'}">${t.category_icon || ''} ${t.category_name || ''}</span></td>
+                <td>${escapeHtml(t.description)}</td>
+                <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
+                    ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)} ${t.currency !== 'USD' ? t.currency : ''}
+                </td>
+                <td>
+                    <div style="display:flex;gap:0.25rem;">
+                        <button class="outline small-btn" onclick="editTransaction(${t.id})">Edit</button>
+                        <button class="outline secondary small-btn" onclick="confirmDelete(${t.id})">Del</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Pagination
+        renderPagination(data.page, data.pages);
+    } catch(err) {
+        document.getElementById('transactions-body').innerHTML = '<tr><td colspan="5" style="text-align:center;">Failed to load transactions</td></tr>';
+        notify(err.message || 'Failed to load transactions', 'error');
+    }
+}
+
+function renderPagination(page, pages) {
+    const div = document.getElementById('pagination');
+    if (pages <= 1) { div.innerHTML = ''; return; }
+    let html = '';
+    if (page > 1) html += `<button class="outline small-btn" onclick="goToPage(${page-1})">Prev</button>`;
+    for (let i = 1; i <= pages; i++) {
+        html += `<button class="${i === page ? '' : 'outline'} small-btn" onclick="goToPage(${i})">${i}</button>`;
+    }
+    if (page < pages) html += `<button class="outline small-btn" onclick="goToPage(${page+1})">Next</button>`;
+    div.innerHTML = html;
+}
+
+function goToPage(p) { currentPage = p; loadTransactions(); }
+
+function sortBy(field) {
+    if (currentSort === field) {
+        currentOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+    } else {
+        currentSort = field;
+        currentOrder = 'desc';
+    }
+    document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+    document.getElementById(`sort-${field}`).textContent = currentOrder === 'desc' ? '▼' : '▲';
+    currentPage = 1;
+    loadTransactions();
+}
+
+function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Add Transaction';
+    document.getElementById('tx-id').value = '';
+    document.getElementById('tx-type').value = 'expense';
+    document.getElementById('tx-amount').value = '';
+    document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('tx-description').value = '';
+    document.getElementById('tx-notes').value = '';
+    loadCategoryOptions();
+    document.getElementById('transaction-modal').showModal();
+}
+
+async function editTransaction(id) {
+    try {
+        const t = await api.get(`/api/v1/transactions/${id}`);
+        document.getElementById('modal-title').textContent = 'Edit Transaction';
+        document.getElementById('tx-id').value = t.id;
+        document.getElementById('tx-type').value = t.type;
+        loadCategoryOptions();
+        document.getElementById('tx-amount').value = t.amount;
+        document.getElementById('tx-date').value = t.date;
+        document.getElementById('tx-category').value = t.category_id;
+        document.getElementById('tx-description').value = t.description;
+        document.getElementById('tx-currency').value = t.currency;
+        document.getElementById('tx-notes').value = t.notes || '';
+        document.getElementById('transaction-modal').showModal();
+    } catch(err) {
+        notify(err.message || 'Failed to load transaction', 'error');
+    }
+}
+
+async function saveTransaction(e) {
+    e.preventDefault();
+    const id = document.getElementById('tx-id').value;
+    const data = {
+        type: document.getElementById('tx-type').value,
+        amount: parseFloat(document.getElementById('tx-amount').value),
+        currency: document.getElementById('tx-currency').value,
+        date: document.getElementById('tx-date').value,
+        category_id: parseInt(document.getElementById('tx-category').value),
+        description: document.getElementById('tx-description').value,
+        notes: document.getElementById('tx-notes').value || null,
+    };
+    try {
+        if (id) {
+            await api.put(`/api/v1/transactions/${id}`, data);
+            notify('Transaction updated', 'success');
+        } else {
+            await api.post('/api/v1/transactions', data);
+            notify('Transaction added', 'success');
+        }
+        closeModal();
+        loadTransactions();
+    } catch(err) {
+        notify(err.message || 'Failed to save transaction', 'error');
+    }
+}
+
+function confirmDelete(id) {
+    const btn = document.getElementById('confirm-delete-btn');
+    btn.onclick = async () => {
+        try {
+            await api.del(`/api/v1/transactions/${id}`);
+            document.getElementById('delete-modal').close();
+            notify('Transaction deleted', 'success');
+            loadTransactions();
+        } catch(err) {
+            notify(err.message || 'Failed to delete', 'error');
+        }
+    };
+    document.getElementById('delete-modal').showModal();
+}
+
+function closeModal() {
+    document.getElementById('transaction-modal').close();
+}
+</script>
+{% endblock %}

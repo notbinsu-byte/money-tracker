@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+{% block title %}Dashboard - Money Tracker{% endblock %}
+
+{% block content %}
+<hgroup>
+    <h2>Dashboard</h2>
+    <p id="dashboard-period"></p>
+</hgroup>
+
+<div class="grid">
+    <article id="card-income">
+        <header>Income</header>
+        <h3 id="total-income">$0.00</h3>
+    </article>
+    <article id="card-expense">
+        <header>Expenses</header>
+        <h3 id="total-expense">$0.00</h3>
+    </article>
+    <article id="card-net">
+        <header>Net</header>
+        <h3 id="total-net">$0.00</h3>
+    </article>
+</div>
+
+<div class="grid">
+    <article>
+        <header>Expense Breakdown</header>
+        <canvas id="category-pie-chart" style="max-height:300px;"></canvas>
+        <p id="no-expense-data" style="display:none; text-align:center; color:var(--muted-color);">No expense data for this period</p>
+    </article>
+    <article>
+        <header>Monthly Trend</header>
+        <canvas id="trend-chart" style="max-height:300px;"></canvas>
+    </article>
+</div>
+
+<div class="grid">
+    <article>
+        <header>Budget Alerts</header>
+        <div id="budget-alerts">
+            <p style="text-align:center; color:var(--muted-color);">No budgets set</p>
+        </div>
+    </article>
+    <article>
+        <header>Recent Transactions</header>
+        <div id="recent-transactions">
+            <p style="text-align:center; color:var(--muted-color);">No transactions yet</p>
+        </div>
+    </article>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    let dashboardCharts = {};
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('dashboard-period').textContent = `${monthNames[month]} ${year}`;
+
+    // Load monthly summary
+    try {
+        const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
+        document.getElementById('total-income').textContent = formatCurrency(summary.totals.income);
+        document.getElementById('total-expense').textContent = formatCurrency(summary.totals.expense);
+        const net = parseFloat(summary.totals.net) || 0;
+        document.getElementById('total-net').textContent = formatCurrency(net);
+        document.getElementById('total-net').style.color = net >= 0 ? 'var(--ins-color)' : 'var(--del-color)';
+
+        // Category pie chart
+        if (summary.expense_breakdown && summary.expense_breakdown.length > 0) {
+            if (dashboardCharts.pie) dashboardCharts.pie.destroy();
+            dashboardCharts.pie = renderPieChart('category-pie-chart', summary.expense_breakdown);
+        } else {
+            document.getElementById('category-pie-chart').style.display = 'none';
+            document.getElementById('no-expense-data').style.display = 'block';
+        }
+    } catch(e) { console.error('Failed to load summary:', e); }
+
+    // Load trend
+    try {
+        const trend = await api.get('/api/v1/reports/trend?months=6');
+        if (dashboardCharts.trend) dashboardCharts.trend.destroy();
+        dashboardCharts.trend = renderTrendChart('trend-chart', trend);
+    } catch(e) { console.error('Failed to load trend:', e); }
+
+    // Load budget alerts
+    try {
+        const budgets = await api.get(`/api/v1/budgets/summary?year=${year}&month=${month}`);
+        const alertsDiv = document.getElementById('budget-alerts');
+        if (budgets.length > 0) {
+            alertsDiv.innerHTML = budgets.map(b => {
+                const pct = Math.min(b.percentage, 100);
+                const color = b.percentage >= 100 ? 'var(--del-color)' : b.percentage >= 80 ? 'var(--warning-color)' : 'var(--ins-color)';
+                return `<div class="budget-alert">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)}</span>
+                        <span>${formatCurrency(b.spent_amount)} / ${formatCurrency(b.budget_amount)}</span>
+                    </div>
+                    <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
+                </div>`;
+            }).join('');
+        }
+    } catch(e) { console.error('Failed to load budgets:', e); }
+
+    // Load recent transactions
+    try {
+        const data = await api.get('/api/v1/transactions?per_page=5&sort_by=date&sort_order=desc');
+        const div = document.getElementById('recent-transactions');
+        if (data.items && data.items.length > 0) {
+            div.innerHTML = '<table role="grid"><tbody>' + data.items.map(t => `
+                <tr>
+                    <td>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.description)}</td>
+                    <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
+                        ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+                    </td>
+                    <td>${formatDate(t.date)}</td>
+                </tr>
+            `).join('') + '</tbody></table>';
+        }
+    } catch(e) { console.error('Failed to load recent transactions:', e); }
+});
+</script>
+{% endblock %}

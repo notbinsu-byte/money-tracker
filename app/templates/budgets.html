@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% set active_page = "budgets" %}
+{% block title %}Budgets - Money Tracker{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <h2>Budgets</h2>
+    <button onclick="openAddBudget()">+ Set Budget</button>
+</div>
+
+<div class="grid" style="margin-bottom:1rem;">
+    <select id="budget-year" onchange="loadBudgets()"></select>
+    <select id="budget-month" onchange="loadBudgets()">
+        <option value="1">January</option><option value="2">February</option>
+        <option value="3">March</option><option value="4">April</option>
+        <option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option>
+        <option value="9">September</option><option value="10">October</option>
+        <option value="11">November</option><option value="12">December</option>
+    </select>
+</div>
+
+<div id="budget-list"></div>
+
+<dialog id="budget-modal">
+    <article style="min-width:min(400px,90vw);">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('budget-modal').close()"></button>
+            <h3 id="budget-modal-title">Set Budget</h3>
+        </header>
+        <form onsubmit="saveBudget(event)">
+            <input type="hidden" id="budget-id">
+            <label>
+                Category
+                <select id="budget-category" required></select>
+            </label>
+            <label>
+                Amount
+                <input type="number" id="budget-amount" step="0.01" min="0.01" required>
+            </label>
+            <label>
+                Period
+                <select id="budget-period" required>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </label>
+            <button type="submit">Save</button>
+        </form>
+    </article>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let expenseCategories = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const now = new Date();
+    const yearSelect = document.getElementById('budget-year');
+    for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        if (y === now.getFullYear()) opt.selected = true;
+        yearSelect.appendChild(opt);
+    }
+    document.getElementById('budget-month').value = now.getMonth() + 1;
+
+    const cats = await api.get('/api/v1/categories?type=expense');
+    expenseCategories = cats;
+    const sel = document.getElementById('budget-category');
+    cats.forEach(c => { sel.innerHTML += `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`; });
+
+    loadBudgets();
+});
+
+async function loadBudgets() {
+    const year = document.getElementById('budget-year').value;
+    const month = document.getElementById('budget-month').value;
+    try {
+        const summaries = await api.get(`/api/v1/budgets/summary?year=${year}&month=${month}`);
+        const div = document.getElementById('budget-list');
+
+        if (summaries.length === 0) {
+            div.innerHTML = '<article><p style="text-align:center;color:var(--muted-color);">No budgets set for this period. Click "+ Set Budget" to create one.</p></article>';
+            return;
+        }
+
+        div.innerHTML = summaries.map(b => {
+            const pct = Math.min(parseFloat(b.percentage) || 0, 100);
+            const color = pct >= 100 ? 'var(--del-color)' : pct >= 80 ? 'var(--warning-color)' : 'var(--ins-color)';
+            const status = b.percentage >= 100 ? 'Over budget!' : b.percentage >= 80 ? 'Near limit' : 'On track';
+            return `<article>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)}</h4>
+                    <div>
+                        <span class="badge" style="background:${color};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${status}</span>
+                        <button class="outline small-btn" onclick="deleteBudget(${b.budget_id})" style="margin-left:0.5rem;">Delete</button>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin:0.5rem 0;">
+                    <span>Spent: ${formatCurrency(b.spent_amount)}</span>
+                    <span>Budget: ${formatCurrency(b.budget_amount)}</span>
+                </div>
+                <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
+                <small>${parseFloat(b.percentage).toFixed(1)}% used | ${formatCurrency(b.remaining)} remaining</small>
+            </article>`;
+        }).join('');
+    } catch(err) {
+        notify(err.message || 'Failed to load budgets', 'error');
+    }
+}
+
+function openAddBudget() {
+    document.getElementById('budget-modal-title').textContent = 'Set Budget';
+    document.getElementById('budget-id').value = '';
+    document.getElementById('budget-amount').value = '';
+    document.getElementById('budget-modal').showModal();
+}
+
+async function saveBudget(e) {
+    e.preventDefault();
+    const year = parseInt(document.getElementById('budget-year').value);
+    const month = parseInt(document.getElementById('budget-month').value);
+    const period = document.getElementById('budget-period').value;
+    const data = {
+        category_id: parseInt(document.getElementById('budget-category').value),
+        amount: parseFloat(document.getElementById('budget-amount').value),
+        period: period,
+        year: year,
+        month: period === 'monthly' ? month : null,
+    };
+    try {
+        await api.post('/api/v1/budgets', data);
+        notify('Budget set', 'success');
+        document.getElementById('budget-modal').close();
+        loadBudgets();
+    } catch(e) {
+        notify(e.message || 'Failed to set budget', 'error');
+    }
+}
+
+async function deleteBudget(id) {
+    if (confirm('Delete this budget?')) {
+        try {
+            await api.del(`/api/v1/budgets/${id}`);
+            notify('Budget deleted', 'success');
+            loadBudgets();
+        } catch(err) {
+            notify(err.message || 'Failed to delete budget', 'error');
+        }
+    }
+}
+</script>
+{% endblock %}

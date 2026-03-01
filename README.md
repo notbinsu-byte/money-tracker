@@ -1,0 +1,126 @@
+# Money Tracker
+
+A personal expense and income tracking web application built with Python and FastAPI.
+
+![Python](https://img.shields.io/badge/Python-3.12+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+## Features
+
+- **Transaction Management** -- Add, edit, delete, and search income/expense transactions
+- **Categories** -- Organize transactions with customizable categories (icons, colors)
+- **Budgets** -- Set monthly/yearly budgets per category with progress tracking
+- **Recurring Transactions** -- Automate repeating income/expenses (daily, weekly, monthly, yearly)
+- **Reports & Charts** -- Interactive charts (pie, bar, line) for spending insights
+- **CSV Import/Export** -- Bulk import via drag-and-drop, export to CSV
+- **Multi-Currency** -- Support for 35+ currencies with live exchange rates
+- **Dark/Light Mode** -- Toggle between themes
+- **Responsive** -- Works on desktop, tablet, and mobile
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python, FastAPI |
+| Database | SQLite + SQLAlchemy ORM |
+| Migrations | Alembic |
+| Frontend | Jinja2, Vanilla JS, Chart.js |
+| CSS | Pico CSS |
+| Currency Rates | frankfurter.app (free, no API key) |
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.12+
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/money-tracker.git
+cd money-tracker
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate (Windows)
+.venv\Scripts\activate
+
+# Activate (macOS/Linux)
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up database
+alembic upgrade head
+
+# Seed default categories
+python seed_data.py
+
+# Run the app
+python run.py
+```
+
+Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+### Configuration
+
+Copy `.env.example` to `.env` and customize:
+
+```
+DATABASE_URL=sqlite:///./money_tracker.db
+BASE_CURRENCY=USD
+```
+
+## Project Structure
+
+```
+money-tracker/
+├── app/
+│   ├── main.py              # FastAPI app entry point
+│   ├── config.py             # App settings
+│   ├── database.py           # Database engine & session
+│   ├── models/               # SQLAlchemy models
+│   ├── schemas/              # Pydantic validation schemas
+│   ├── routers/              # API route handlers
+│   ├── services/             # Business logic
+│   ├── templates/            # Jinja2 HTML templates
+│   └── static/               # CSS & JavaScript
+├── alembic/                  # Database migrations
+├── seed_data.py              # Default category seeder
+├── run.py                    # Uvicorn launcher
+├── requirements.txt          # Production dependencies
+└── requirements-dev.txt      # Dev/test dependencies
+```
+
+## API Documentation
+
+Once the server is running, visit:
+
+- **Swagger UI** -- [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc** -- [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### API Endpoints
+
+| Resource | Endpoints |
+|----------|-----------|
+| Transactions | `GET/POST /api/v1/transactions`, `GET/PUT/DELETE /api/v1/transactions/{id}` |
+| Categories | `GET/POST /api/v1/categories`, `GET/PUT/DELETE /api/v1/categories/{id}` |
+| Budgets | `GET/POST /api/v1/budgets`, `GET/PUT/DELETE /api/v1/budgets/{id}`, `GET /api/v1/budgets/summary` |
+| Recurring | `GET/POST /api/v1/recurring`, `GET/PUT/DELETE /api/v1/recurring/{id}`, `POST /api/v1/recurring/generate` |
+| Reports | `GET /api/v1/reports/monthly-summary`, `GET /api/v1/reports/yearly-summary`, `GET /api/v1/reports/category-breakdown`, `GET /api/v1/reports/trend` |
+| CSV | `POST /api/v1/csv/import`, `GET /api/v1/csv/export`, `GET /api/v1/csv/template` |
+| Currency | `GET /api/v1/currencies`, `GET /api/v1/currencies/rates`, `POST /api/v1/currencies/refresh`, `GET /api/v1/currencies/convert` |
+
+## Screenshots
+
+| Dashboard | Transactions | Reports |
+|-----------|-------------|---------|
+| Summary cards, charts, budget alerts | Filterable table with CRUD modals | Pie, bar, and line charts |
+
+## License
+
+This project is licensed under the MIT License -- see the [LICENSE](LICENSE) file for details.

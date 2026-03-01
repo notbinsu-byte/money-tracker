@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% set active_page = "categories" %}
+{% block title %}Categories - Money Tracker{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <h2>Categories</h2>
+    <button onclick="openAddCategory()">+ Add Category</button>
+</div>
+
+<div class="grid">
+    <article>
+        <header>Expense Categories</header>
+        <div id="expense-categories"></div>
+    </article>
+    <article>
+        <header>Income Categories</header>
+        <div id="income-categories"></div>
+    </article>
+</div>
+
+<!-- Add/Edit Modal -->
+<dialog id="category-modal">
+    <article style="min-width:min(400px,90vw);">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('category-modal').close()"></button>
+            <h3 id="cat-modal-title">Add Category</h3>
+        </header>
+        <form onsubmit="saveCategory(event)">
+            <input type="hidden" id="cat-id">
+            <label>
+                Name
+                <input type="text" id="cat-name" maxlength="100" required>
+            </label>
+            <label>
+                Type
+                <select id="cat-type" required>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                </select>
+            </label>
+            <div class="grid">
+                <label>
+                    Icon (emoji)
+                    <input type="text" id="cat-icon" value="📁" maxlength="10">
+                </label>
+                <label>
+                    Color
+                    <input type="color" id="cat-color" value="#6c757d">
+                </label>
+            </div>
+            <button type="submit">Save</button>
+        </form>
+    </article>
+</dialog>
+
+<dialog id="cat-delete-modal">
+    <article>
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('cat-delete-modal').close()"></button>
+            <h3>Confirm Delete</h3>
+        </header>
+        <p>Are you sure? Categories with transactions cannot be deleted.</p>
+        <footer>
+            <button class="secondary" onclick="document.getElementById('cat-delete-modal').close()">Cancel</button>
+            <button class="contrast" id="cat-confirm-delete-btn">Delete</button>
+        </footer>
+    </article>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', loadAllCategories);
+
+async function loadAllCategories() {
+    try {
+        const cats = await api.get('/api/v1/categories');
+        const expDiv = document.getElementById('expense-categories');
+        const incDiv = document.getElementById('income-categories');
+
+        const render = (list) => list.length === 0
+            ? '<p style="text-align:center;color:var(--muted-color);">No categories</p>'
+            : list.map(c => `
+                <div class="category-item" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-left:3px solid ${c.color};margin-bottom:0.5rem;">
+                    <span>${escapeHtml(c.icon)} ${escapeHtml(c.name)} ${c.is_default ? '<small>(default)</small>' : ''}</span>
+                    <div style="display:flex;gap:0.25rem;">
+                        <button class="outline small-btn" onclick="editCategory(${c.id})">Edit</button>
+                        <button class="outline secondary small-btn" onclick="deleteCategory(${c.id})">Del</button>
+                    </div>
+                </div>
+            `).join('');
+
+        expDiv.innerHTML = render(cats.filter(c => c.type === 'expense'));
+        incDiv.innerHTML = render(cats.filter(c => c.type === 'income'));
+    } catch(err) {
+        notify(err.message || 'Failed to load categories', 'error');
+    }
+}
+
+function openAddCategory() {
+    document.getElementById('cat-modal-title').textContent = 'Add Category';
+    document.getElementById('cat-id').value = '';
+    document.getElementById('cat-name').value = '';
+    document.getElementById('cat-type').value = 'expense';
+    document.getElementById('cat-icon').value = '📁';
+    document.getElementById('cat-color').value = '#6c757d';
+    document.getElementById('category-modal').showModal();
+}
+
+async function editCategory(id) {
+    try {
+        const c = await api.get(`/api/v1/categories/${id}`);
+        document.getElementById('cat-modal-title').textContent = 'Edit Category';
+        document.getElementById('cat-id').value = c.id;
+        document.getElementById('cat-name').value = c.name;
+        document.getElementById('cat-type').value = c.type;
+        document.getElementById('cat-icon').value = c.icon;
+        document.getElementById('cat-color').value = c.color;
+        document.getElementById('category-modal').showModal();
+    } catch(err) {
+        notify(err.message || 'Failed to load category', 'error');
+    }
+}
+
+async function saveCategory(e) {
+    e.preventDefault();
+    const id = document.getElementById('cat-id').value;
+    const data = {
+        name: document.getElementById('cat-name').value,
+        type: document.getElementById('cat-type').value,
+        icon: document.getElementById('cat-icon').value,
+        color: document.getElementById('cat-color').value,
+    };
+    try {
+        if (id) {
+            await api.put(`/api/v1/categories/${id}`, data);
+            notify('Category updated', 'success');
+        } else {
+            await api.post('/api/v1/categories', data);
+            notify('Category added', 'success');
+        }
+        document.getElementById('category-modal').close();
+        loadAllCategories();
+    } catch(err) {
+        notify(err.message || 'Failed to save category', 'error');
+    }
+}
+
+function deleteCategory(id) {
+    const btn = document.getElementById('cat-confirm-delete-btn');
+    btn.onclick = async () => {
+        try {
+            await api.del(`/api/v1/categories/${id}`);
+            document.getElementById('cat-delete-modal').close();
+            notify('Category deleted', 'success');
+            loadAllCategories();
+        } catch(e) {
+            notify(e.message || 'Cannot delete: category has transactions', 'error');
+        }
+    };
+    document.getElementById('cat-delete-modal').showModal();
+}
+</script>
+{% endblock %}

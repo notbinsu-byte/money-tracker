@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% set active_page = "recurring" %}
+{% block title %}Recurring Transactions - Money Tracker{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <h2>Recurring Transactions</h2>
+    <div style="display:flex;gap:0.5rem;">
+        <button class="secondary" onclick="generateNow()">Generate Now</button>
+        <button onclick="openAddRecurring()">+ Add Rule</button>
+    </div>
+</div>
+
+<div id="recurring-list"></div>
+
+<dialog id="recurring-modal">
+    <article style="min-width:min(500px,90vw);">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('recurring-modal').close()"></button>
+            <h3 id="rec-modal-title">Add Recurring Transaction</h3>
+        </header>
+        <form onsubmit="saveRecurring(event)">
+            <input type="hidden" id="rec-id">
+            <div class="grid">
+                <label>
+                    Type
+                    <select id="rec-type" required onchange="loadRecCategories()">
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </label>
+                <label>
+                    Frequency
+                    <select id="rec-frequency" required>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Amount
+                    <input type="number" id="rec-amount" step="0.01" min="0.01" required>
+                </label>
+                <label>
+                    Category
+                    <select id="rec-category" required></select>
+                </label>
+            </div>
+            <label>
+                Description
+                <input type="text" id="rec-description" maxlength="500" required>
+            </label>
+            <div class="grid">
+                <label>
+                    Start Date
+                    <input type="date" id="rec-start" required>
+                </label>
+                <label>
+                    End Date (optional)
+                    <input type="date" id="rec-end">
+                </label>
+            </div>
+            <button type="submit">Save</button>
+        </form>
+    </article>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let recCategories = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    recCategories = await api.get('/api/v1/categories');
+    loadRecCategories();
+    loadRecurring();
+    document.getElementById('rec-start').value = new Date().toISOString().split('T')[0];
+});
+
+function loadRecCategories() {
+    const type = document.getElementById('rec-type').value;
+    const sel = document.getElementById('rec-category');
+    sel.innerHTML = '';
+    recCategories.filter(c => c.type === type).forEach(c => {
+        sel.innerHTML += `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`;
+    });
+}
+
+async function loadRecurring() {
+    try {
+        const items = await api.get('/api/v1/recurring');
+        const div = document.getElementById('recurring-list');
+
+        if (items.length === 0) {
+            div.innerHTML = '<article><p style="text-align:center;color:var(--muted-color);">No recurring transactions. Click "+ Add Rule" to create one.</p></article>';
+            return;
+        }
+
+        div.innerHTML = items.map(r => `
+            <article>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong>${escapeHtml(r.category_icon || '')} ${escapeHtml(r.description)}</strong>
+                        <br><small>${r.frequency} | ${r.type} | ${formatCurrency(r.amount)} ${r.currency}</small>
+                    </div>
+                    <div style="display:flex;gap:0.25rem;align-items:center;">
+                        <span class="badge" style="background:${r.is_active ? 'var(--ins-color)' : 'var(--muted-color)'};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${r.is_active ? 'Active' : 'Inactive'}</span>
+                        <button class="outline small-btn" onclick="editRecurring(${r.id})">Edit</button>
+                        <button class="outline secondary small-btn" onclick="deleteRecurring(${r.id})">Del</button>
+                    </div>
+                </div>
+                <small>Start: ${formatDate(r.start_date)} ${r.end_date ? '| End: ' + formatDate(r.end_date) : '| No end date'} ${r.last_generated ? '| Last: ' + formatDate(r.last_generated) : ''}</small>
+            </article>
+        `).join('');
+    } catch(err) {
+        notify(err.message || 'Failed to load recurring rules', 'error');
+    }
+}
+
+function openAddRecurring() {
+    document.getElementById('rec-modal-title').textContent = 'Add Recurring Transaction';
+    document.getElementById('rec-id').value = '';
+    document.getElementById('rec-type').value = 'expense';
+    document.getElementById('rec-frequency').value = 'monthly';
+    document.getElementById('rec-amount').value = '';
+    document.getElementById('rec-description').value = '';
+    document.getElementById('rec-start').value = new Date().toISOString().split('T')[0];
+    document.getElementById('rec-end').value = '';
+    loadRecCategories();
+    document.getElementById('recurring-modal').showModal();
+}
+
+async function editRecurring(id) {
+    try {
+        const r = await api.get(`/api/v1/recurring/${id}`);
+        document.getElementById('rec-modal-title').textContent = 'Edit Recurring Transaction';
+        document.getElementById('rec-id').value = r.id;
+        document.getElementById('rec-type').value = r.type;
+        loadRecCategories();
+        document.getElementById('rec-frequency').value = r.frequency;
+        document.getElementById('rec-amount').value = r.amount;
+        document.getElementById('rec-category').value = r.category_id;
+        document.getElementById('rec-description').value = r.description;
+        document.getElementById('rec-start').value = r.start_date;
+        document.getElementById('rec-end').value = r.end_date || '';
+        document.getElementById('recurring-modal').showModal();
+    } catch(err) {
+        notify(err.message || 'Failed to load recurring rule', 'error');
+    }
+}
+
+async function saveRecurring(e) {
+    e.preventDefault();
+    const id = document.getElementById('rec-id').value;
+    const data = {
+        type: document.getElementById('rec-type').value,
+        amount: parseFloat(document.getElementById('rec-amount').value),
+        currency: 'USD',
+        description: document.getElementById('rec-description').value,
+        category_id: parseInt(document.getElementById('rec-category').value),
+        frequency: document.getElementById('rec-frequency').value,
+        start_date: document.getElementById('rec-start').value,
+        end_date: document.getElementById('rec-end').value || null,
+    };
+    try {
+        if (id) {
+            await api.put(`/api/v1/recurring/${id}`, data);
+            notify('Recurring rule updated', 'success');
+        } else {
+            await api.post('/api/v1/recurring', data);
+            notify('Recurring rule created', 'success');
+        }
+        document.getElementById('recurring-modal').close();
+        loadRecurring();
+    } catch(err) {
+        notify(err.message || 'Failed to save recurring rule', 'error');
+    }
+}
+
+async function deleteRecurring(id) {
+    if (confirm('Delete this recurring rule?')) {
+        try {
+            await api.del(`/api/v1/recurring/${id}`);
+            notify('Recurring rule deleted', 'success');
+            loadRecurring();
+        } catch(err) {
+            notify(err.message || 'Failed to delete', 'error');
+        }
+    }
+}
+
+async function generateNow() {
+    try {
+        const result = await api.post('/api/v1/recurring/generate');
+        notify(`Generated ${result.generated} transaction(s)`, 'success');
+        loadRecurring();
+    } catch(err) {
+        notify(err.message || 'Generation failed', 'error');
+    }
+}
+</script>
+{% endblock %}
