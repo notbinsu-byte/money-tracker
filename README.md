@@ -64,7 +64,7 @@ python seed_data.py
 python run.py
 ```
 
-Open [http://localhost:8000](http://localhost:8000) in your browser.
+Open [http://localhost:8000](http://localhost:8000) in your browser, or use `start.bat` for Tailscale access.
 
 ### Configuration
 
@@ -74,6 +74,40 @@ Copy `.env.example` to `.env` and customize:
 DATABASE_URL=sqlite:///./money_tracker.db
 BASE_CURRENCY=USD
 ```
+
+## Remote Access (Tailscale)
+
+Access the app securely from your phone or other devices using [Tailscale](https://tailscale.com):
+
+1. Install Tailscale on your PC and mobile devices
+2. Sign in on all devices with the same account
+3. Run the app using `start.bat` (binds to your Tailscale IP)
+4. Access from any device: `http://<your-tailscale-ip>:8000`
+
+All traffic is end-to-end encrypted via WireGuard — no ports to open, no public exposure.
+
+To run on localhost only (default):
+
+```bash
+python run.py
+```
+
+To specify a custom host:
+
+```bash
+set HOST=0.0.0.0
+python run.py
+```
+
+## Security
+
+- Security headers (X-Frame-Options, X-Content-Type-Options, XSS-Protection, Referrer-Policy, Permissions-Policy)
+- Input validation via Pydantic schemas with regex patterns
+- XSS prevention with `escapeHtml()` on all user-rendered content
+- CSV injection protection on export
+- File size limits on CSV upload (5 MB)
+- API docs disabled in production
+- Server binds to localhost by default
 
 ## Project Structure
 
@@ -92,16 +126,10 @@ money-tracker/
 ├── alembic/                  # Database migrations
 ├── seed_data.py              # Default category seeder
 ├── run.py                    # Uvicorn launcher
+├── start.bat                 # Quick launcher (activates venv + Tailscale IP)
 ├── requirements.txt          # Production dependencies
 └── requirements-dev.txt      # Dev/test dependencies
 ```
-
-## API Documentation
-
-Once the server is running, visit:
-
-- **Swagger UI** -- [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc** -- [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ### API Endpoints
 
