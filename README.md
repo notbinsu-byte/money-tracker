@@ -14,7 +14,8 @@ A personal expense and income tracking web application built with Python and Fas
 - **Recurring Transactions** -- Automate repeating income/expenses (daily, weekly, monthly, yearly)
 - **Reports & Charts** -- Interactive charts (pie, bar, line) for spending insights
 - **CSV Import/Export** -- Bulk import via drag-and-drop, export to CSV
-- **Multi-Currency** -- Support for 35+ currencies with live exchange rates
+- **Multi-Currency** -- Per-currency tracking with support for 35+ currencies and live exchange rates
+- **AI Financial Assistant** -- Chat with an AI analyst powered by Claude to query your data, analyze spending, and get insights
 - **Dark/Light Mode** -- Toggle between themes
 - **Responsive** -- Works on desktop, tablet, and mobile
 
@@ -27,6 +28,7 @@ A personal expense and income tracking web application built with Python and Fas
 | Migrations | Alembic |
 | Frontend | Jinja2, Vanilla JS, Chart.js |
 | CSS | Pico CSS |
+| AI | Anthropic Claude API (claude-opus-4-6) |
 | Currency Rates | frankfurter.app (free, no API key) |
 
 ## Quick Start
@@ -73,7 +75,17 @@ Copy `.env.example` to `.env` and customize:
 ```
 DATABASE_URL=sqlite:///./money_tracker.db
 BASE_CURRENCY=USD
+
+# AI Chat - Option 1: Standard Anthropic API key
+ANTHROPIC_API_KEY=sk-ant-...
+
+# AI Chat - Option 2: Custom proxy (e.g. corporate endpoint)
+ANTHROPIC_BASE_URL=https://api.example.com/
+ANTHROPIC_AUTH_TOKEN=your-token-here
+ANTHROPIC_MODEL=claude-opus-4-6
 ```
+
+The AI assistant is optional -- the app works fully without it. If no API key is configured, the AI Chat page shows a "Not Configured" status.
 
 ## Remote Access (Tailscale)
 
@@ -98,6 +110,25 @@ To specify a custom host:
 set HOST=0.0.0.0
 python run.py
 ```
+
+## AI Financial Assistant
+
+The built-in AI assistant lets you chat with your financial data using natural language. Powered by Claude, it can:
+
+- Summarize monthly spending and income
+- Identify top expense categories
+- Check budget status and alerts
+- Analyze trends across months
+- Search for specific transactions
+- Track category spending over time
+
+Ask questions like:
+- *"How much did I spend this month?"*
+- *"Am I over budget on anything?"*
+- *"Compare my spending this month vs last month"*
+- *"What's my average monthly spending on food?"*
+
+The assistant uses tool-based data retrieval to query your actual database -- no data leaves your machine except the chat messages sent to the Claude API.
 
 ## Security
 
@@ -142,12 +173,13 @@ money-tracker/
 | Reports | `GET /api/v1/reports/monthly-summary`, `GET /api/v1/reports/yearly-summary`, `GET /api/v1/reports/category-breakdown`, `GET /api/v1/reports/trend` |
 | CSV | `POST /api/v1/csv/import`, `GET /api/v1/csv/export`, `GET /api/v1/csv/template` |
 | Currency | `GET /api/v1/currencies`, `GET /api/v1/currencies/rates`, `POST /api/v1/currencies/refresh`, `GET /api/v1/currencies/convert` |
+| AI Chat | `POST /api/v1/ai/chat`, `GET /api/v1/ai/status` |
 
 ## Screenshots
 
-| Dashboard | Transactions | Reports |
-|-----------|-------------|---------|
-| Summary cards, charts, budget alerts | Filterable table with CRUD modals | Pie, bar, and line charts |
+| Dashboard | Transactions | Reports | AI Chat |
+|-----------|-------------|---------|---------|
+| Summary cards, charts, budget alerts | Filterable table with CRUD modals | Pie, bar, and line charts | Chat-based financial analysis |
 
 ## License
 
