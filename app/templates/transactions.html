@@ -205,7 +205,7 @@ async function loadTransactions() {
                 <td><span style="color:${escapeHtml(t.category_color || '#666')}">${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '')}</span></td>
                 <td>${escapeHtml(t.description)}</td>
                 <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
-                    ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)} ${escapeHtml(t.currency !== 'USD' ? t.currency : '')}
+                    ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, t.currency || 'USD')}
                 </td>
                 <td>
                     <div style="display:flex;gap:0.25rem;">

@@ -26,6 +26,7 @@ def list_budgets(
             id=b.id,
             category_id=b.category_id,
             amount=b.amount,
+            currency=b.currency or "USD",
             period=b.period,
             year=b.year,
             month=b.month,
@@ -43,15 +44,17 @@ def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
         Budget.category_id == data.category_id,
         Budget.year == data.year,
         Budget.month == data.month,
+        Budget.currency == data.currency,
     ).first()
     if existing:
-        raise HTTPException(400, "Budget already exists for this category and period")
+        raise HTTPException(400, "Budget already exists for this category, currency, and period")
     budget = Budget(**data.model_dump())
     db.add(budget)
     db.commit()
     db.refresh(budget)
     return BudgetResponse(
         id=budget.id, category_id=budget.category_id, amount=budget.amount,
+        currency=budget.currency or "USD",
         period=budget.period, year=budget.year, month=budget.month,
         category_name=cat.name, category_icon=cat.icon,
     )
@@ -72,6 +75,7 @@ def get_budget(budget_id: int, db: Session = Depends(get_db)):
     cat = db.query(Category).filter(Category.id == b.category_id).first()
     return BudgetResponse(
         id=b.id, category_id=b.category_id, amount=b.amount,
+        currency=b.currency or "USD",
         period=b.period, year=b.year, month=b.month,
         category_name=cat.name if cat else None, category_icon=cat.icon if cat else None,
     )
@@ -88,6 +92,7 @@ def update_budget(budget_id: int, data: BudgetUpdate, db: Session = Depends(get_
     cat = db.query(Category).filter(Category.id == b.category_id).first()
     return BudgetResponse(
         id=b.id, category_id=b.category_id, amount=b.amount,
+        currency=b.currency or "USD",
         period=b.period, year=b.year, month=b.month,
         category_name=cat.name if cat else None, category_icon=cat.icon if cat else None,
     )

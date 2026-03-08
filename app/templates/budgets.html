@@ -39,6 +39,11 @@
                 <input type="number" id="budget-amount" step="0.01" min="0.01" required>
             </label>
             <label>
+                Currency
+                <input type="text" id="budget-currency" value="USD" maxlength="3" pattern="[A-Z]{3}" required
+                       style="text-transform:uppercase;" placeholder="USD">
+            </label>
+            <label>
                 Period
                 <select id="budget-period" required>
                     <option value="monthly">Monthly</option>
@@ -92,18 +97,18 @@ async function loadBudgets() {
             const status = b.percentage >= 100 ? 'Over budget!' : b.percentage >= 80 ? 'Near limit' : 'On track';
             return `<article>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)}</h4>
+                    <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} (${escapeHtml(b.currency)})</h4>
                     <div>
                         <span class="badge" style="background:${color};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${status}</span>
                         <button class="outline small-btn" onclick="deleteBudget(${b.budget_id})" style="margin-left:0.5rem;">Delete</button>
                     </div>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin:0.5rem 0;">
-                    <span>Spent: ${formatCurrency(b.spent_amount)}</span>
-                    <span>Budget: ${formatCurrency(b.budget_amount)}</span>
+                    <span>Spent: ${formatCurrency(b.spent_amount, b.currency)}</span>
+                    <span>Budget: ${formatCurrency(b.budget_amount, b.currency)}</span>
                 </div>
                 <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
-                <small>${parseFloat(b.percentage).toFixed(1)}% used | ${formatCurrency(b.remaining)} remaining</small>
+                <small>${parseFloat(b.percentage).toFixed(1)}% used | ${formatCurrency(b.remaining, b.currency)} remaining</small>
             </article>`;
         }).join('');
     } catch(err) {
@@ -115,6 +120,7 @@ function openAddBudget() {
     document.getElementById('budget-modal-title').textContent = 'Set Budget';
     document.getElementById('budget-id').value = '';
     document.getElementById('budget-amount').value = '';
+    document.getElementById('budget-currency').value = 'USD';
     document.getElementById('budget-modal').showModal();
 }
 
@@ -126,6 +132,7 @@ async function saveBudget(e) {
     const data = {
         category_id: parseInt(document.getElementById('budget-category').value),
         amount: parseFloat(document.getElementById('budget-amount').value),
+        currency: document.getElementById('budget-currency').value.toUpperCase(),
         period: period,
         year: year,
         month: period === 'monthly' ? month : null,

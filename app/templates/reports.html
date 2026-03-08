@@ -15,6 +15,9 @@
         <option value="9">September</option><option value="10">October</option>
         <option value="11">November</option><option value="12">December</option>
     </select>
+    <select id="report-currency" onchange="loadReports()">
+        <option value="">All Currencies</option>
+    </select>
 </div>
 
 <div class="grid">
@@ -65,51 +68,152 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReports();
 });
 
+function populateCurrencyDropdown(currencies) {
+    const select = document.getElementById('report-currency');
+    const previousValue = select.value;
+    // Remove all options except the first ("All Currencies")
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    currencies.forEach(cur => {
+        const opt = document.createElement('option');
+        opt.value = cur;
+        opt.textContent = cur;
+        select.appendChild(opt);
+    });
+    // Restore previous selection if it still exists
+    if (previousValue && currencies.includes(previousValue)) {
+        select.value = previousValue;
+    } else {
+        select.value = '';
+    }
+}
+
+function getSelectedCurrency() {
+    return document.getElementById('report-currency').value;
+}
+
 async function loadReports() {
     const year = document.getElementById('report-year').value;
     const month = document.getElementById('report-month').value;
+    const selectedCurrency = getSelectedCurrency();
+
+    // Collect all currencies from both endpoints
+    const allCurrencies = new Set();
 
     // Monthly summary
     try {
         const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
-        document.getElementById('monthly-summary').innerHTML = `
-            <table>
-                <tr><td>Income</td><td style="text-align:right;color:var(--ins-color);">${formatCurrency(summary.totals.income)}</td></tr>
-                <tr><td>Expenses</td><td style="text-align:right;color:var(--del-color);">${formatCurrency(summary.totals.expense)}</td></tr>
-                <tr><td><strong>Net</strong></td><td style="text-align:right;"><strong>${formatCurrency(summary.totals.net)}</strong></td></tr>
-            </table>`;
 
-        // Category pie
-        if (summary.expense_breakdown && summary.expense_breakdown.length > 0) {
+        // Gather currencies from summary.totals
+        const summaryTotalsCurrencies = Object.keys(summary.totals || {});
+        summaryTotalsCurrencies.forEach(c => allCurrencies.add(c));
+
+        // Build monthly summary table: per-currency rows
+        const totals = summary.totals || {};
+        const currenciesToShow = selectedCurrency
+            ? (totals[selectedCurrency] ? [selectedCurrency] : [])
+            : Object.keys(totals);
+
+        if (currenciesToShow.length > 0) {
+            let rows = '';
+            currenciesToShow.forEach(cur => {
+                const t = totals[cur];
+                if (currenciesToShow.length > 1) {
+                    rows += '<tr><td colspan="2"><strong>' + escapeHtml(cur) + '</strong></td></tr>';
+                }
+                rows += '<tr><td>Income</td><td style="text-align:right;color:var(--ins-color);">'
+                    + escapeHtml(formatCurrency(t.income, cur)) + '</td></tr>';
+                rows += '<tr><td>Expenses</td><td style="text-align:right;color:var(--del-color);">'
+                    + escapeHtml(formatCurrency(t.expense, cur)) + '</td></tr>';
+                rows += '<tr><td><strong>Net</strong></td><td style="text-align:right;"><strong>'
+                    + escapeHtml(formatCurrency(t.net, cur)) + '</strong></td></tr>';
+            });
+            document.getElementById('monthly-summary').innerHTML = '<table>' + rows + '</table>';
+        } else {
+            document.getElementById('monthly-summary').innerHTML =
+                '<p style="text-align:center;color:var(--muted-color);">No data for this period</p>';
+        }
+
+        // Category pie chart: filter by currency
+        const expenseBreakdown = summary.expense_breakdown || [];
+        const pieCurrency = selectedCurrency || (currenciesToShow.length > 0 ? currenciesToShow[0] : null);
+        const pieData = pieCurrency
+            ? expenseBreakdown.filter(item => item.currency === pieCurrency)
+            : expenseBreakdown;
+
+        if (pieData.length > 0) {
             document.getElementById('report-pie').style.display = 'block';
             document.getElementById('report-no-data').style.display = 'none';
             if (reportCharts.pie) reportCharts.pie.destroy();
-            reportCharts.pie = renderPieChart('report-pie', summary.expense_breakdown);
+            reportCharts.pie = renderPieChart('report-pie', pieData, pieCurrency);
         } else {
             document.getElementById('report-pie').style.display = 'none';
             document.getElementById('report-no-data').style.display = 'block';
+            if (reportCharts.pie) { reportCharts.pie.destroy(); reportCharts.pie = null; }
         }
 
-        // Category table
-        const all = [...(summary.expense_breakdown || []), ...(summary.income_breakdown || [])];
-        if (all.length > 0) {
-            document.getElementById('category-table').innerHTML = `<table>
-                <thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
-                <tbody>${all.map(c => `<tr><td>${escapeHtml(c.category_icon)} ${escapeHtml(c.category_name)}</td><td style="text-align:right;">${formatCurrency(c.total)}</td></tr>`).join('')}</tbody>
-            </table>`;
+        // Category breakdown table: add Currency column
+        const allBreakdown = [...expenseBreakdown, ...(summary.income_breakdown || [])];
+        const filteredBreakdown = selectedCurrency
+            ? allBreakdown.filter(c => c.currency === selectedCurrency)
+            : allBreakdown;
+
+        if (filteredBreakdown.length > 0) {
+            document.getElementById('category-table').innerHTML = '<table>'
+                + '<thead><tr><th>Category</th><th>Currency</th><th style="text-align:right;">Amount</th></tr></thead>'
+                + '<tbody>' + filteredBreakdown.map(c =>
+                    '<tr><td>' + escapeHtml(c.category_icon) + ' ' + escapeHtml(c.category_name)
+                    + '</td><td>' + escapeHtml(c.currency)
+                    + '</td><td style="text-align:right;">' + escapeHtml(formatCurrency(c.total, c.currency))
+                    + '</td></tr>'
+                ).join('') + '</tbody></table>';
         } else {
-            document.getElementById('category-table').innerHTML = '<p style="text-align:center;color:var(--muted-color);">No data for this period</p>';
+            document.getElementById('category-table').innerHTML =
+                '<p style="text-align:center;color:var(--muted-color);">No data for this period</p>';
         }
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        notify(e.message, 'error');
+        console.error(e);
+    }
 
     // Yearly trend
     try {
         const yearly = await api.get(`/api/v1/reports/yearly-summary?year=${year}`);
+
+        // Gather currencies from yearly.totals
+        const yearlyTotalsCurrencies = Object.keys(yearly.totals || {});
+        yearlyTotalsCurrencies.forEach(c => allCurrencies.add(c));
+
+        // Determine which currency to chart
+        const chartCurrency = selectedCurrency
+            || (yearlyTotalsCurrencies.length > 0 ? yearlyTotalsCurrencies[0] : 'USD');
+
+        // Extract single-currency monthly arrays from the new format
+        // yearly.monthly_data: [{month, currencies: {"USD": {income, expense, net}, ...}}, ...]
+        const monthlyData = (yearly.monthly_data || []).map(m => {
+            const curData = (m.currencies && m.currencies[chartCurrency]) || { income: 0, expense: 0, net: 0 };
+            return {
+                month: m.month,
+                income: curData.income,
+                expense: curData.expense,
+                net: curData.net,
+            };
+        });
+
         if (reportCharts.bar) reportCharts.bar.destroy();
-        reportCharts.bar = renderBarChart('report-bar', yearly.monthly_data);
+        reportCharts.bar = renderBarChart('report-bar', monthlyData, chartCurrency);
         if (reportCharts.line) reportCharts.line.destroy();
-        reportCharts.line = renderLineChart('report-line', yearly.monthly_data);
-    } catch(e) { console.error(e); }
+        reportCharts.line = renderLineChart('report-line', monthlyData, chartCurrency);
+    } catch(e) {
+        notify(e.message, 'error');
+        console.error(e);
+    }
+
+    // Populate currency dropdown with all discovered currencies
+    if (allCurrencies.size > 0) {
+        populateCurrencyDropdown(Array.from(allCurrencies).sort());
+    }
 }
 </script>
 {% endblock %}

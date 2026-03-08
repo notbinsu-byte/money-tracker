@@ -5,6 +5,7 @@ from decimal import Decimal
 class BudgetBase(BaseModel):
     category_id: int
     amount: Decimal = Field(..., gt=0)
+    currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
     period: str = Field(..., pattern="^(monthly|yearly)$")
     year: int
     month: Union[int, None] = Field(None, ge=1, le=12)
@@ -14,6 +15,7 @@ class BudgetCreate(BudgetBase):
 
 class BudgetUpdate(BaseModel):
     amount: Union[Decimal, None] = Field(None, gt=0)
+    currency: Union[str, None] = Field(None, pattern="^[A-Z]{3}$")
     period: Union[str, None] = Field(None, pattern="^(monthly|yearly)$")
     year: Union[int, None] = None
     month: Union[int, None] = Field(None, ge=1, le=12)
@@ -35,5 +37,6 @@ class BudgetSummary(BaseModel):
     remaining: Decimal
     percentage: float
     period: str
+    currency: str
     year: int
     month: Union[int, None] = None

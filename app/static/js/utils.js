@@ -2,11 +2,15 @@
 
 function formatCurrency(amount, currency = 'USD') {
     const num = parseFloat(amount) || 0;
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 2,
-    }).format(num);
+    try {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 2,
+        }).format(num);
+    } catch {
+        return `${num.toFixed(2)} ${currency}`;
+    }
 }
 
 function formatDate(dateStr) {

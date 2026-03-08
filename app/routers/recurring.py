@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/v1/recurring", tags=["recurring"])
 
 def _to_response(r: RecurringTransaction) -> RecurringResponse:
     return RecurringResponse(
-        id=r.id, type=r.type, amount=r.amount, currency=r.currency,
+        id=r.id, type=r.type, amount=r.amount, currency=r.currency or "USD",
         description=r.description, category_id=r.category_id,
         frequency=r.frequency, start_date=r.start_date, end_date=r.end_date,
         last_generated=r.last_generated, is_active=r.is_active,

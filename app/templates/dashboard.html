@@ -8,29 +8,24 @@
     <p id="dashboard-period"></p>
 </hgroup>
 
-<div class="grid">
-    <article id="card-income">
-        <header>Income</header>
-        <h3 id="total-income">$0.00</h3>
-    </article>
-    <article id="card-expense">
-        <header>Expenses</header>
-        <h3 id="total-expense">$0.00</h3>
-    </article>
-    <article id="card-net">
-        <header>Net</header>
-        <h3 id="total-net">$0.00</h3>
-    </article>
+<div id="summary-cards">
+    <p style="text-align:center; color:var(--muted-color);">Loading summary...</p>
 </div>
 
 <div class="grid">
     <article>
-        <header>Expense Breakdown</header>
+        <header style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Expense Breakdown</span>
+            <select id="pie-currency-select" style="width:auto;margin:0;padding:2px 8px;font-size:0.85rem;"></select>
+        </header>
         <canvas id="category-pie-chart" style="max-height:300px;"></canvas>
         <p id="no-expense-data" style="display:none; text-align:center; color:var(--muted-color);">No expense data for this period</p>
     </article>
     <article>
-        <header>Monthly Trend</header>
+        <header style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Monthly Trend</span>
+            <select id="trend-currency-select" style="width:auto;margin:0;padding:2px 8px;font-size:0.85rem;"></select>
+        </header>
         <canvas id="trend-chart" style="max-height:300px;"></canvas>
     </article>
 </div>
@@ -63,20 +58,108 @@ document.addEventListener('DOMContentLoaded', async () => {
     const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
     document.getElementById('dashboard-period').textContent = `${monthNames[month]} ${year}`;
 
+    // Shared state for selectors
+    let summaryData = null;
+    let trendData = null;
+
+    // --- Helper: render summary cards per currency ---
+    function renderSummaryCards(totals) {
+        const container = document.getElementById('summary-cards');
+        const currencies = Object.keys(totals);
+        if (currencies.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--muted-color);">No data for this period</p>';
+            return;
+        }
+        container.innerHTML = currencies.map(cur => {
+            const t = totals[cur];
+            const income = parseFloat(t.income) || 0;
+            const expense = parseFloat(t.expense) || 0;
+            const net = parseFloat(t.net) || 0;
+            const netColor = net >= 0 ? 'var(--ins-color)' : 'var(--del-color)';
+            return `<div class="grid">
+                <article>
+                    <header>Income (${escapeHtml(cur)})</header>
+                    <h3>${formatCurrency(income, cur)}</h3>
+                </article>
+                <article>
+                    <header>Expenses (${escapeHtml(cur)})</header>
+                    <h3>${formatCurrency(expense, cur)}</h3>
+                </article>
+                <article>
+                    <header>Net (${escapeHtml(cur)})</header>
+                    <h3 style="color:${netColor}">${formatCurrency(net, cur)}</h3>
+                </article>
+            </div>`;
+        }).join('');
+    }
+
+    // --- Helper: render pie chart for a specific currency ---
+    function renderPieForCurrency(currency) {
+        if (!summaryData) return;
+        const filtered = (summaryData.expense_breakdown || []).filter(d => d.currency === currency);
+        const canvas = document.getElementById('category-pie-chart');
+        const noData = document.getElementById('no-expense-data');
+        if (dashboardCharts.pie) {
+            dashboardCharts.pie.destroy();
+            dashboardCharts.pie = null;
+        }
+        if (filtered.length > 0) {
+            canvas.style.display = '';
+            noData.style.display = 'none';
+            dashboardCharts.pie = renderPieChart('category-pie-chart', filtered, currency);
+        } else {
+            canvas.style.display = 'none';
+            noData.style.display = 'block';
+        }
+    }
+
+    // --- Helper: render trend chart for a specific currency ---
+    function renderTrendForCurrency(currency) {
+        if (!trendData) return;
+        const mapped = trendData.map(d => {
+            const cData = (d.currencies && d.currencies[currency]) || {};
+            return {
+                year: d.year,
+                month: d.month,
+                income: parseFloat(cData.income) || 0,
+                expense: parseFloat(cData.expense) || 0,
+            };
+        });
+        if (dashboardCharts.trend) {
+            dashboardCharts.trend.destroy();
+            dashboardCharts.trend = null;
+        }
+        dashboardCharts.trend = renderTrendChart('trend-chart', mapped, currency);
+    }
+
+    // --- Helper: populate a select element with currency options ---
+    function populateCurrencySelect(selectId, currencies, defaultCur) {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = currencies.map(c =>
+            `<option value="${escapeHtml(c)}"${c === defaultCur ? ' selected' : ''}>${escapeHtml(c)}</option>`
+        ).join('');
+        return sel;
+    }
+
     // Load monthly summary
     try {
         const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
-        document.getElementById('total-income').textContent = formatCurrency(summary.totals.income);
-        document.getElementById('total-expense').textContent = formatCurrency(summary.totals.expense);
-        const net = parseFloat(summary.totals.net) || 0;
-        document.getElementById('total-net').textContent = formatCurrency(net);
-        document.getElementById('total-net').style.color = net >= 0 ? 'var(--ins-color)' : 'var(--del-color)';
+        summaryData = summary;
 
-        // Category pie chart
-        if (summary.expense_breakdown && summary.expense_breakdown.length > 0) {
-            if (dashboardCharts.pie) dashboardCharts.pie.destroy();
-            dashboardCharts.pie = renderPieChart('category-pie-chart', summary.expense_breakdown);
+        // Render summary cards
+        renderSummaryCards(summary.totals);
+
+        // Determine available currencies from totals
+        const currencies = Object.keys(summary.totals);
+        const defaultCurrency = currencies.includes('USD') ? 'USD' : (currencies[0] || 'USD');
+
+        // Pie chart currency selector
+        if (currencies.length > 0) {
+            const pieSelect = populateCurrencySelect('pie-currency-select', currencies, defaultCurrency);
+            pieSelect.addEventListener('change', () => renderPieForCurrency(pieSelect.value));
+            renderPieForCurrency(defaultCurrency);
         } else {
+            document.getElementById('pie-currency-select').style.display = 'none';
             document.getElementById('category-pie-chart').style.display = 'none';
             document.getElementById('no-expense-data').style.display = 'block';
         }
@@ -85,8 +168,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load trend
     try {
         const trend = await api.get('/api/v1/reports/trend?months=6');
-        if (dashboardCharts.trend) dashboardCharts.trend.destroy();
-        dashboardCharts.trend = renderTrendChart('trend-chart', trend);
+        trendData = trend;
+
+        // Collect all currencies appearing in trend data
+        const trendCurrencies = new Set();
+        trend.forEach(d => {
+            if (d.currencies) {
+                Object.keys(d.currencies).forEach(c => trendCurrencies.add(c));
+            }
+        });
+        const trendCurrArr = Array.from(trendCurrencies).sort();
+        const defaultTrendCur = trendCurrArr.includes('USD') ? 'USD' : (trendCurrArr[0] || 'USD');
+
+        if (trendCurrArr.length > 0) {
+            const trendSelect = populateCurrencySelect('trend-currency-select', trendCurrArr, defaultTrendCur);
+            trendSelect.addEventListener('change', () => renderTrendForCurrency(trendSelect.value));
+            renderTrendForCurrency(defaultTrendCur);
+        } else {
+            document.getElementById('trend-currency-select').style.display = 'none';
+        }
     } catch(e) { console.error('Failed to load trend:', e); }
 
     // Load budget alerts
@@ -97,10 +197,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             alertsDiv.innerHTML = budgets.map(b => {
                 const pct = Math.min(b.percentage, 100);
                 const color = b.percentage >= 100 ? 'var(--del-color)' : b.percentage >= 80 ? 'var(--warning-color)' : 'var(--ins-color)';
+                const cur = b.currency || 'USD';
                 return `<div class="budget-alert">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)}</span>
-                        <span>${formatCurrency(b.spent_amount)} / ${formatCurrency(b.budget_amount)}</span>
+                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.7;">(${escapeHtml(cur)})</small></span>
+                        <span>${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
                     </div>
                     <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
                 </div>`;
@@ -113,15 +214,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await api.get('/api/v1/transactions?per_page=5&sort_by=date&sort_order=desc');
         const div = document.getElementById('recent-transactions');
         if (data.items && data.items.length > 0) {
-            div.innerHTML = '<table role="grid"><tbody>' + data.items.map(t => `
+            div.innerHTML = '<table role="grid"><tbody>' + data.items.map(t => {
+                const cur = t.currency || 'USD';
+                return `
                 <tr>
                     <td>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.description)}</td>
                     <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
-                        ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+                        ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, cur)}
                     </td>
                     <td>${formatDate(t.date)}</td>
-                </tr>
-            `).join('') + '</tbody></table>';
+                </tr>`;
+            }).join('') + '</tbody></table>';
         }
     } catch(e) { console.error('Failed to load recent transactions:', e); }
 });

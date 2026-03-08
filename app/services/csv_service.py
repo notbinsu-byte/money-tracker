@@ -29,7 +29,7 @@ def export_transactions(db: Session, type: str | None = None) -> str:
             "date": t.date.isoformat(),
             "type": t.type,
             "amount": str(t.amount),
-            "currency": t.currency,
+            "currency": t.currency or "USD",
             "description": _sanitize_csv_field(t.description),
             "category": _sanitize_csv_field(t.category.name if t.category else ""),
             "notes": _sanitize_csv_field(t.notes or ""),

@@ -13,7 +13,7 @@ function getChartColors(count) {
     return colors;
 }
 
-function renderPieChart(canvasId, data) {
+function renderPieChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     return new Chart(ctx, {
@@ -35,7 +35,7 @@ function renderPieChart(canvasId, data) {
                         label: ctx => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                             const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return `${ctx.label}: ${formatCurrency(ctx.parsed)} (${pct}%)`;
+                            return `${ctx.label}: ${formatCurrency(ctx.parsed, currency)} (${pct}%)`;
                         }
                     }
                 }
@@ -44,7 +44,7 @@ function renderPieChart(canvasId, data) {
     });
 }
 
-function renderBarChart(canvasId, monthlyData) {
+function renderBarChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     return new Chart(ctx, {
@@ -71,17 +71,17 @@ function renderBarChart(canvasId, monthlyData) {
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v) } },
+                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v, currency) } },
             },
             plugins: {
                 legend: { position: 'bottom' },
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
     });
 }
 
-function renderLineChart(canvasId, monthlyData) {
+function renderLineChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     return new Chart(ctx, {
@@ -100,17 +100,17 @@ function renderLineChart(canvasId, monthlyData) {
         options: {
             responsive: true,
             scales: {
-                y: { ticks: { callback: v => formatCurrency(v) } },
+                y: { ticks: { callback: v => formatCurrency(v, currency) } },
             },
             plugins: {
                 legend: { position: 'bottom' },
-                tooltip: { callbacks: { label: ctx => `Net: ${formatCurrency(ctx.parsed.y)}` } },
+                tooltip: { callbacks: { label: ctx => `Net: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
     });
 }
 
-function renderTrendChart(canvasId, data) {
+function renderTrendChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     return new Chart(ctx, {
@@ -139,11 +139,11 @@ function renderTrendChart(canvasId, data) {
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v) } },
+                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v, currency) } },
             },
             plugins: {
                 legend: { position: 'bottom' },
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
     });

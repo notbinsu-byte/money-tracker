@@ -45,6 +45,11 @@
                     <input type="number" id="rec-amount" step="0.01" min="0.01" required>
                 </label>
                 <label>
+                    Currency
+                    <input type="text" id="rec-currency" value="USD" maxlength="3" pattern="[A-Z]{3}" required
+                           style="text-transform:uppercase;" placeholder="USD">
+                </label>
+                <label>
                     Category
                     <select id="rec-category" required></select>
                 </label>
@@ -104,7 +109,7 @@ async function loadRecurring() {
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div>
                         <strong>${escapeHtml(r.category_icon || '')} ${escapeHtml(r.description)}</strong>
-                        <br><small>${r.frequency} | ${r.type} | ${formatCurrency(r.amount)} ${r.currency}</small>
+                        <br><small>${escapeHtml(r.frequency)} | ${escapeHtml(r.type)} | ${formatCurrency(r.amount, r.currency || 'USD')}</small>
                     </div>
                     <div style="display:flex;gap:0.25rem;align-items:center;">
                         <span class="badge" style="background:${r.is_active ? 'var(--ins-color)' : 'var(--muted-color)'};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${r.is_active ? 'Active' : 'Inactive'}</span>
@@ -126,6 +131,7 @@ function openAddRecurring() {
     document.getElementById('rec-type').value = 'expense';
     document.getElementById('rec-frequency').value = 'monthly';
     document.getElementById('rec-amount').value = '';
+    document.getElementById('rec-currency').value = 'USD';
     document.getElementById('rec-description').value = '';
     document.getElementById('rec-start').value = new Date().toISOString().split('T')[0];
     document.getElementById('rec-end').value = '';
@@ -142,6 +148,7 @@ async function editRecurring(id) {
         loadRecCategories();
         document.getElementById('rec-frequency').value = r.frequency;
         document.getElementById('rec-amount').value = r.amount;
+        document.getElementById('rec-currency').value = r.currency || 'USD';
         document.getElementById('rec-category').value = r.category_id;
         document.getElementById('rec-description').value = r.description;
         document.getElementById('rec-start').value = r.start_date;
@@ -158,7 +165,7 @@ async function saveRecurring(e) {
     const data = {
         type: document.getElementById('rec-type').value,
         amount: parseFloat(document.getElementById('rec-amount').value),
-        currency: 'USD',
+        currency: document.getElementById('rec-currency').value.toUpperCase(),
         description: document.getElementById('rec-description').value,
         category_id: parseInt(document.getElementById('rec-category').value),
         frequency: document.getElementById('rec-frequency').value,
