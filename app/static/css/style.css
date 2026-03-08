@@ -145,5 +145,43 @@ dialog article {
 
 /* Progress bar custom color support */
 progress {
-    height: 0.75rem;
+    height: 0.75rem !important;
+    border-radius: 4px;
+    border: none !important;
+    overflow: hidden;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background: var(--muted-border-color) !important;
+}
+
+progress::-webkit-progress-bar {
+    background: var(--muted-border-color) !important;
+    border-radius: 4px;
+}
+
+progress.progress-green::-webkit-progress-value {
+    background: #2ecc71 !important;
+    border-radius: 4px;
+}
+progress.progress-yellow::-webkit-progress-value {
+    background: #f39c12 !important;
+    border-radius: 4px;
+}
+progress.progress-red::-webkit-progress-value {
+    background: #e74c3c !important;
+    border-radius: 4px;
+}
+
+progress.progress-green::-moz-progress-bar {
+    background: #2ecc71 !important;
+    border-radius: 4px;
+}
+progress.progress-yellow::-moz-progress-bar {
+    background: #f39c12 !important;
+    border-radius: 4px;
+}
+progress.progress-red::-moz-progress-bar {
+    background: #e74c3c !important;
+    border-radius: 4px;
 }

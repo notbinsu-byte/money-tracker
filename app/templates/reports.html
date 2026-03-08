@@ -126,7 +126,9 @@ async function loadReports() {
                     + escapeHtml(formatCurrency(t.income, cur)) + '</td></tr>';
                 rows += '<tr><td>Expenses</td><td style="text-align:right;color:var(--del-color);">'
                     + escapeHtml(formatCurrency(t.expense, cur)) + '</td></tr>';
-                rows += '<tr><td><strong>Net</strong></td><td style="text-align:right;"><strong>'
+                const netVal = parseFloat(t.net) || 0;
+                const netColor = netVal >= 0 ? 'var(--ins-color)' : 'var(--del-color)';
+                rows += '<tr><td><strong>Net</strong></td><td style="text-align:right;color:' + netColor + ';"><strong>'
                     + escapeHtml(formatCurrency(t.net, cur)) + '</strong></td></tr>';
             });
             document.getElementById('monthly-summary').innerHTML = '<table>' + rows + '</table>';

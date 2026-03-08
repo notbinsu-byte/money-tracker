@@ -93,13 +93,15 @@ async function loadBudgets() {
 
         div.innerHTML = summaries.map(b => {
             const pct = Math.min(parseFloat(b.percentage) || 0, 100);
-            const color = pct >= 100 ? 'var(--del-color)' : pct >= 80 ? 'var(--warning-color)' : 'var(--ins-color)';
+            const progressClass = pct >= 100 ? 'progress-red' : pct >= 80 ? 'progress-yellow' : 'progress-green';
+            const badgeBg = pct >= 100 ? '#e74c3c' : pct >= 80 ? '#f39c12' : '#2ecc71';
+            const badgeText = pct >= 80 && pct < 100 ? '#000' : '#fff';
             const status = b.percentage >= 100 ? 'Over budget!' : b.percentage >= 80 ? 'Near limit' : 'On track';
             return `<article>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} (${escapeHtml(b.currency)})</h4>
                     <div>
-                        <span class="badge" style="background:${color};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${status}</span>
+                        <span class="badge" style="background:${badgeBg};color:${badgeText};padding:2px 8px;border-radius:4px;font-size:0.8rem;">${status}</span>
                         <button class="outline small-btn" onclick="deleteBudget(${b.budget_id})" style="margin-left:0.5rem;">Delete</button>
                     </div>
                 </div>
@@ -107,7 +109,7 @@ async function loadBudgets() {
                     <span>Spent: ${formatCurrency(b.spent_amount, b.currency)}</span>
                     <span>Budget: ${formatCurrency(b.budget_amount, b.currency)}</span>
                 </div>
-                <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
+                <progress class="${progressClass}" value="${pct}" max="100"></progress>
                 <small>${parseFloat(b.percentage).toFixed(1)}% used | ${formatCurrency(b.remaining, b.currency)} remaining</small>
             </article>`;
         }).join('');

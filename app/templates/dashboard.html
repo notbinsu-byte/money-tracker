@@ -196,14 +196,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (budgets.length > 0) {
             alertsDiv.innerHTML = budgets.map(b => {
                 const pct = Math.min(b.percentage, 100);
-                const color = b.percentage >= 100 ? 'var(--del-color)' : b.percentage >= 80 ? 'var(--warning-color)' : 'var(--ins-color)';
+                const progressClass = b.percentage >= 100 ? 'progress-red' : b.percentage >= 80 ? 'progress-yellow' : 'progress-green';
                 const cur = b.currency || 'USD';
                 return `<div class="budget-alert">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
                         <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.7;">(${escapeHtml(cur)})</small></span>
                         <span>${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
                     </div>
-                    <progress value="${pct}" max="100" style="--pico-progress-color:${color};"></progress>
+                    <progress class="${progressClass}" value="${pct}" max="100"></progress>
                 </div>`;
             }).join('');
         }

@@ -202,7 +202,7 @@ async function loadTransactions() {
         tbody.innerHTML = data.items.map(t => `
             <tr>
                 <td>${formatDate(t.date)}</td>
-                <td><span style="color:${escapeHtml(t.category_color || '#666')}">${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '')}</span></td>
+                <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${escapeHtml(t.category_color || '#6c757d')};margin-right:6px;"></span>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '')}</td>
                 <td>${escapeHtml(t.description)}</td>
                 <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
                     ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, t.currency || 'USD')}

@@ -112,7 +112,7 @@ async function loadRecurring() {
                         <br><small>${escapeHtml(r.frequency)} | ${escapeHtml(r.type)} | ${formatCurrency(r.amount, r.currency || 'USD')}</small>
                     </div>
                     <div style="display:flex;gap:0.25rem;align-items:center;">
-                        <span class="badge" style="background:${r.is_active ? 'var(--ins-color)' : 'var(--muted-color)'};color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${r.is_active ? 'Active' : 'Inactive'}</span>
+                        <span class="badge" style="background:${r.is_active ? '#2ecc71' : '#636e72'};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.8rem;">${r.is_active ? 'Active' : 'Inactive'}</span>
                         <button class="outline small-btn" onclick="editRecurring(${r.id})">Edit</button>
                         <button class="outline secondary small-btn" onclick="deleteRecurring(${r.id})">Del</button>
                     </div>

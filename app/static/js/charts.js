@@ -16,6 +16,8 @@ function getChartColors(count) {
 function renderPieChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#c2c7d0' : '#333';
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -29,7 +31,7 @@ function renderPieChart(canvasId, data, currency = 'USD') {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } },
+                legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 }, color: textColor } },
                 tooltip: {
                     callbacks: {
                         label: ctx => {
@@ -47,6 +49,9 @@ function renderPieChart(canvasId, data, currency = 'USD') {
 function renderBarChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#c2c7d0' : '#333';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
     return new Chart(ctx, {
         type: 'bar',
         data: {
@@ -71,10 +76,18 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v, currency) } },
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
+                    grid: { color: gridColor },
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                },
             },
             plugins: {
-                legend: { position: 'bottom' },
+                legend: { position: 'bottom', labels: { color: textColor } },
                 tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
@@ -84,6 +97,9 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
 function renderLineChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#c2c7d0' : '#333';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -100,10 +116,17 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
         options: {
             responsive: true,
             scales: {
-                y: { ticks: { callback: v => formatCurrency(v, currency) } },
+                y: {
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
+                    grid: { color: gridColor },
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                },
             },
             plugins: {
-                legend: { position: 'bottom' },
+                legend: { position: 'bottom', labels: { color: textColor } },
                 tooltip: { callbacks: { label: ctx => `Net: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
@@ -113,6 +136,9 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
 function renderTrendChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#c2c7d0' : '#333';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -139,10 +165,18 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true, ticks: { callback: v => formatCurrency(v, currency) } },
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
+                    grid: { color: gridColor },
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                },
             },
             plugins: {
-                legend: { position: 'bottom' },
+                legend: { position: 'bottom', labels: { color: textColor } },
                 tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
             },
         },
