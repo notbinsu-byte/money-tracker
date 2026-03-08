@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% set active_page = "ai-chat" %}
+{% block title %}AI Assistant - Money Tracker{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>AI Financial Assistant</h2>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span id="ai-status" class="ai-status-badge">Checking...</span>
+            <button class="outline small-btn" onclick="clearChat()">Clear Chat</button>
+        </div>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+        <div class="chat-welcome">
+            <div class="welcome-icon">🤖</div>
+            <h3>Hello! I'm your financial assistant.</h3>
+            <p>I can help you analyze your spending, track budgets, find trends, and answer questions about your finances. Try asking me something like:</p>
+            <div class="suggestion-chips">
+                <button class="chip" onclick="sendSuggestion(this)">How much did I spend this month?</button>
+                <button class="chip" onclick="sendSuggestion(this)">What are my top expense categories?</button>
+                <button class="chip" onclick="sendSuggestion(this)">Am I over budget on anything?</button>
+                <button class="chip" onclick="sendSuggestion(this)">Show my income vs expenses trend</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <form id="chat-form" onsubmit="sendMessage(event)">
+            <div class="chat-input-row">
+                <textarea id="chat-input" placeholder="Ask about your finances..." rows="1"
+                    onkeydown="handleKeyDown(event)" maxlength="2000"></textarea>
+                <button type="submit" id="send-btn" class="send-btn" title="Send">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <small class="input-hint">Press Enter to send, Shift+Enter for new line</small>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let conversationHistory = [];
+let isWaiting = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAiStatus();
+    autoResizeTextarea();
+});
+
+async function checkAiStatus() {
+    try {
+        const status = await api.get('/api/v1/ai/status');
+        const badge = document.getElementById('ai-status');
+        if (status.configured) {
+            badge.textContent = 'Online';
+            badge.className = 'ai-status-badge online';
+        } else {
+            badge.textContent = 'Not Configured';
+            badge.className = 'ai-status-badge offline';
+            addSystemMessage('AI is not configured. Please set ANTHROPIC_API_KEY in your .env file to enable the assistant.');
+        }
+    } catch(e) {
+        document.getElementById('ai-status').textContent = 'Error';
+        document.getElementById('ai-status').className = 'ai-status-badge offline';
+    }
+}
+
+function autoResizeTextarea() {
+    const textarea = document.getElementById('chat-input');
+    textarea.addEventListener('input', () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    });
+}
+
+function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(e);
+    }
+}
+
+function sendSuggestion(btn) {
+    document.getElementById('chat-input').value = btn.textContent;
+    sendMessage(new Event('submit'));
+}
+
+async function sendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message || isWaiting) return;
+
+    // Hide welcome if visible
+    const welcome = document.querySelector('.chat-welcome');
+    if (welcome) welcome.style.display = 'none';
+
+    // Add user message
+    addMessage('user', message);
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Show typing indicator
+    isWaiting = true;
+    updateSendButton();
+    const typingId = addTypingIndicator();
+
+    try {
+        const result = await api.post('/api/v1/ai/chat', {
+            message: message,
+            conversation_history: conversationHistory,
+        });
+
+        removeTypingIndicator(typingId);
+        addMessage('assistant', result.response);
+        conversationHistory = result.conversation_history;
+    } catch(err) {
+        removeTypingIndicator(typingId);
+        addMessage('error', err.message || 'Failed to get response. Please try again.');
+    } finally {
+        isWaiting = false;
+        updateSendButton();
+        input.focus();
+    }
+}
+
+function addMessage(role, content) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = `chat-message ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    if (role === 'user') {
+        bubble.textContent = content;
+    } else if (role === 'error') {
+        bubble.innerHTML = '<span style="color:var(--del-color);">' + escapeHtml(content) + '</span>';
+    } else {
+        // Render markdown-like content for assistant
+        bubble.innerHTML = renderMarkdown(content);
+    }
+
+    const time = document.createElement('div');
+    time.className = 'message-time';
+    const now = new Date();
+    time.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    div.appendChild(bubble);
+    div.appendChild(time);
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function addSystemMessage(content) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'chat-message system';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.innerHTML = escapeHtml(content);
+    div.appendChild(bubble);
+    container.appendChild(div);
+}
+
+function addTypingIndicator() {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'chat-message assistant';
+    const id = 'typing-' + Date.now();
+    div.id = id;
+    div.innerHTML = `<div class="message-bubble typing-indicator">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="typing-text">Analyzing your data...</span>
+    </div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+function updateSendButton() {
+    const btn = document.getElementById('send-btn');
+    btn.disabled = isWaiting;
+    btn.setAttribute('aria-busy', isWaiting);
+}
+
+function clearChat() {
+    conversationHistory = [];
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = `<div class="chat-welcome">
+        <div class="welcome-icon">🤖</div>
+        <h3>Hello! I'm your financial assistant.</h3>
+        <p>I can help you analyze your spending, track budgets, find trends, and answer questions about your finances. Try asking me something like:</p>
+        <div class="suggestion-chips">
+            <button class="chip" onclick="sendSuggestion(this)">How much did I spend this month?</button>
+            <button class="chip" onclick="sendSuggestion(this)">What are my top expense categories?</button>
+            <button class="chip" onclick="sendSuggestion(this)">Am I over budget on anything?</button>
+            <button class="chip" onclick="sendSuggestion(this)">Show my income vs expenses trend</button>
+        </div>
+    </div>`;
+    notify('Chat cleared', 'info');
+}
+
+function renderMarkdown(text) {
+    if (!text) return '';
+
+    // Safely escape HTML tags only (not markdown chars)
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Code blocks (```) — extract and protect first
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return '<pre><code>' + code + '</code></pre>';
+    });
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Bold (must come before italic)
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    // Unordered lists
+    html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+    // Wrap consecutive li in ul
+    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+    // Ordered lists
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr>');
+    // Line breaks (but not inside pre blocks)
+    html = html.replace(/\n/g, '<br>');
+    // Clean up extra br around block elements
+    html = html.replace(/<br>\s*(<\/?(ul|ol|li|h[2-4]|pre|hr|code))/g, '$1');
+    html = html.replace(/(<\/(ul|ol|li|h[2-4]|pre|hr)>)\s*<br>/g, '$1');
+    // Clean br inside pre
+    html = html.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (_, code) => {
+        return '<pre><code>' + code.replace(/<br>/g, '\n') + '</code></pre>';
+    });
+
+    return html;
+}
+</script>
+{% endblock %}

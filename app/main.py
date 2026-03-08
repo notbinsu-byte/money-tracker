@@ -40,7 +40,7 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(app_dir, "static")), name="static")
 
 # Register API routers
-from app.routers import categories, transactions, budgets, recurring, reports, csv_io, currencies, pages
+from app.routers import categories, transactions, budgets, recurring, reports, csv_io, currencies, pages, ai_chat
 app.include_router(pages.router)
 app.include_router(categories.router)
 app.include_router(transactions.router)
@@ -49,3 +49,4 @@ app.include_router(recurring.router)
 app.include_router(reports.router)
 app.include_router(csv_io.router)
 app.include_router(currencies.router)
+app.include_router(ai_chat.router)
