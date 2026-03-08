@@ -29,8 +29,8 @@ def get_rates(db: Session = Depends(get_db)):
 async def refresh(db: Session = Depends(get_db)):
     try:
         count = await refresh_rates(db)
-    except Exception as e:
-        raise HTTPException(502, f"Failed to fetch exchange rates: {str(e)}")
+    except Exception:
+        raise HTTPException(502, "Failed to fetch exchange rates. Please try again later.")
     return {"refreshed": count}
 
 @router.get("/convert", response_model=ConversionResponse)

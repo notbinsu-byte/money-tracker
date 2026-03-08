@@ -25,11 +25,15 @@ def csv_template():
         headers={"Content-Disposition": "attachment; filename=template.csv"},
     )
 
+MAX_CSV_SIZE = 5 * 1024 * 1024  # 5 MB
+
 @router.post("/import")
 async def csv_import(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(400, "File must be a CSV")
     content = await file.read()
+    if len(content) > MAX_CSV_SIZE:
+        raise HTTPException(400, "File too large. Maximum size is 5 MB.")
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError:

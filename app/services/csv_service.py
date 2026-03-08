@@ -8,6 +8,12 @@ from app.models.category import Category
 
 EXPORT_FIELDS = ["date", "type", "amount", "currency", "description", "category", "notes"]
 
+def _sanitize_csv_field(value: str) -> str:
+    """Prevent CSV injection by escaping formula-triggering characters."""
+    if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
 def export_transactions(db: Session, type: str | None = None) -> str:
     """Export transactions to CSV string."""
     query = db.query(Transaction).order_by(Transaction.date.desc())
@@ -24,9 +30,9 @@ def export_transactions(db: Session, type: str | None = None) -> str:
             "type": t.type,
             "amount": str(t.amount),
             "currency": t.currency,
-            "description": t.description,
-            "category": t.category.name if t.category else "",
-            "notes": t.notes or "",
+            "description": _sanitize_csv_field(t.description),
+            "category": _sanitize_csv_field(t.category.name if t.category else ""),
+            "notes": _sanitize_csv_field(t.notes or ""),
         })
     return output.getvalue()
 

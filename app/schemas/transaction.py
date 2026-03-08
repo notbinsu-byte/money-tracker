@@ -6,11 +6,11 @@ from decimal import Decimal
 class TransactionBase(BaseModel):
     type: str = Field(..., pattern="^(expense|income)$")
     amount: Decimal = Field(..., gt=0)
-    currency: str = Field(default="USD", max_length=3)
+    currency: str = Field(default="USD", max_length=3, pattern="^[A-Z]{3}$")
     description: str = Field(..., max_length=500)
     date: dt.date
     category_id: int
-    notes: Union[str, None] = None
+    notes: Union[str, None] = Field(None, max_length=2000)
 
 class TransactionCreate(TransactionBase):
     pass
@@ -18,11 +18,11 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(BaseModel):
     type: Union[str, None] = Field(None, pattern="^(expense|income)$")
     amount: Union[Decimal, None] = Field(None, gt=0)
-    currency: Union[str, None] = Field(None, max_length=3)
+    currency: Union[str, None] = Field(None, max_length=3, pattern="^[A-Z]{3}$")
     description: Union[str, None] = Field(None, max_length=500)
     date: Union[str, None] = None
     category_id: Union[int, None] = None
-    notes: Union[str, None] = None
+    notes: Union[str, None] = Field(None, max_length=2000)
 
     @model_validator(mode="before")
     @classmethod

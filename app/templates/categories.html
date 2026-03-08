@@ -82,7 +82,7 @@ async function loadAllCategories() {
         const render = (list) => list.length === 0
             ? '<p style="text-align:center;color:var(--muted-color);">No categories</p>'
             : list.map(c => `
-                <div class="category-item" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-left:3px solid ${c.color};margin-bottom:0.5rem;">
+                <div class="category-item" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-left:3px solid ${escapeHtml(c.color)};margin-bottom:0.5rem;">
                     <span>${escapeHtml(c.icon)} ${escapeHtml(c.name)} ${c.is_default ? '<small>(default)</small>' : ''}</span>
                     <div style="display:flex;gap:0.25rem;">
                         <button class="outline small-btn" onclick="editCategory(${c.id})">Edit</button>
