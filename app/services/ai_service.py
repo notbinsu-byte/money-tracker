@@ -27,6 +27,7 @@ You can help with questions like:
 - "Show me my income vs expenses trend"
 - "Compare my spending this month vs last month"
 - "What's my average monthly spending on food?"
+- "How are my savings goals?"
 """
 
 # Tool definitions for Claude
@@ -118,6 +119,17 @@ TOOLS = [
                 "months": {"type": "integer", "description": "Number of months to look back (default 6, max 24)"},
             },
             "required": ["category_name"],
+        },
+    },
+    {
+        "name": "get_savings_goals",
+        "description": "Get all savings goals with progress. Shows goal name, target amount, current amount, percentage saved, deadline, and completion status. Use this to answer questions about savings progress or financial targets.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "enum": ["active", "completed", "all"], "description": "Filter by status (default: all)"},
+            },
+            "required": [],
         },
     },
     {
@@ -247,6 +259,29 @@ def execute_tool(tool_name: str, tool_input: dict, db: Session):
                 "total": float(total) if total else 0.0,
             })
         return _serialize(result)
+
+    elif tool_name == "get_savings_goals":
+        from app.models.savings_goal import SavingsGoal
+        query = db.query(SavingsGoal)
+        status = tool_input.get("status", "all")
+        if status == "active":
+            query = query.filter(SavingsGoal.is_completed == False)
+        elif status == "completed":
+            query = query.filter(SavingsGoal.is_completed == True)
+        goals = query.order_by(SavingsGoal.created_at.desc()).all()
+        return _serialize([
+            {
+                "name": g.name,
+                "target_amount": g.target_amount,
+                "current_amount": g.current_amount or 0,
+                "currency": g.currency or "USD",
+                "percentage": round(float(g.current_amount or 0) / float(g.target_amount) * 100, 1) if g.target_amount else 0,
+                "deadline": g.deadline,
+                "is_completed": g.is_completed,
+                "icon": g.icon,
+            }
+            for g in goals
+        ])
 
     elif tool_name == "get_current_date":
         today = date.today()

@@ -36,6 +36,10 @@ async def reports_page(request: Request):
 async def import_export_page(request: Request):
     return templates.TemplateResponse("import_export.html", {"request": request})
 
+@router.get("/savings-goals")
+async def savings_goals_page(request: Request):
+    return templates.TemplateResponse("savings_goals.html", {"request": request})
+
 @router.get("/ai-chat")
 async def ai_chat_page(request: Request):
     return templates.TemplateResponse("ai_chat.html", {"request": request})

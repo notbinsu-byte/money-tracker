@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% set active_page = "savings" %}
+{% block title %}Savings Goals - Money Tracker{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <h2>Savings Goals</h2>
+    <button onclick="openAddGoal()">+ New Goal</button>
+</div>
+
+<div style="margin-bottom:1rem;">
+    <fieldset role="group" style="margin-bottom:0;">
+        <button class="filter-btn active" data-status="all" onclick="filterGoals('all',this)">All</button>
+        <button class="filter-btn outline" data-status="active" onclick="filterGoals('active',this)">Active</button>
+        <button class="filter-btn outline" data-status="completed" onclick="filterGoals('completed',this)">Completed</button>
+    </fieldset>
+</div>
+
+<div id="goals-list"></div>
+
+<dialog id="goal-modal">
+    <article style="min-width:min(450px,90vw);">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('goal-modal').close()"></button>
+            <h3 id="goal-modal-title">New Savings Goal</h3>
+        </header>
+        <form onsubmit="saveGoal(event)">
+            <input type="hidden" id="goal-id">
+            <label>
+                Name
+                <input type="text" id="goal-name" required maxlength="100" placeholder="e.g. Emergency Fund">
+            </label>
+            <div class="grid">
+                <label>
+                    Target Amount
+                    <input type="number" id="goal-target" step="0.01" min="0.01" required>
+                </label>
+                <label>
+                    Currency
+                    <input type="text" id="goal-currency" value="USD" maxlength="3" pattern="[A-Z]{3}" required
+                           style="text-transform:uppercase;" placeholder="USD">
+                </label>
+            </div>
+            <div class="grid">
+                <label>
+                    Icon
+                    <input type="text" id="goal-icon" value="🎯" maxlength="50">
+                </label>
+                <label>
+                    Color
+                    <input type="color" id="goal-color" value="#2ecc71">
+                </label>
+            </div>
+            <label>
+                Deadline (optional)
+                <input type="date" id="goal-deadline">
+            </label>
+            <label>
+                Notes (optional)
+                <textarea id="goal-notes" maxlength="500" rows="2"></textarea>
+            </label>
+            <button type="submit">Save</button>
+        </form>
+    </article>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadGoals();
+});
+
+async function loadGoals() {
+    try {
+        const goals = await api.get(`/api/v1/savings-goals?status=${currentFilter}`);
+        const div = document.getElementById('goals-list');
+
+        if (goals.length === 0) {
+            const msg = currentFilter === 'all'
+                ? 'No savings goals yet. Click "+ New Goal" to create one.'
+                : `No ${currentFilter} goals.`;
+            div.innerHTML = `<article><p style="text-align:center;color:var(--muted-color);">${escapeHtml(msg)}</p></article>`;
+            return;
+        }
+
+        div.innerHTML = goals.map(g => {
+            const pct = parseFloat(g.percentage) || 0;
+            const current = parseFloat(g.current_amount) || 0;
+            const target = parseFloat(g.target_amount) || 1;
+            const progressClass = g.is_completed ? 'progress-green' : pct >= 75 ? 'progress-yellow' : 'progress-green';
+
+            let deadlineHtml = '';
+            if (g.deadline) {
+                if (g.is_completed) {
+                    deadlineHtml = `<small style="color:var(--ins-color);">✓ Completed</small>`;
+                } else if (g.days_remaining !== null && g.days_remaining !== undefined) {
+                    const urgency = g.days_remaining <= 7 ? 'var(--del-color)' : g.days_remaining <= 30 ? 'var(--warning-color)' : 'var(--muted-color)';
+                    deadlineHtml = `<small style="color:${urgency};">${g.days_remaining} days left · ${escapeHtml(formatDate(g.deadline))}</small>`;
+                }
+            } else if (g.is_completed) {
+                deadlineHtml = `<small style="color:var(--ins-color);">✓ Completed</small>`;
+            }
+
+            const contributeHtml = g.is_completed ? '' : `
+                <div class="contribute-row">
+                    <input type="number" class="contribute-input" id="contribute-${g.id}"
+                           step="0.01" min="0.01" placeholder="Amount"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();contribute(${g.id});}">
+                    <button class="contribute-btn outline small-btn" onclick="contribute(${g.id})">+ Add</button>
+                </div>`;
+
+            return `<article class="goal-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="goal-icon" style="background:${escapeHtml(g.color)};">${escapeHtml(g.icon)}</span>
+                        <div>
+                            <h4 style="margin:0;">${escapeHtml(g.name)}</h4>
+                            ${deadlineHtml}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.25rem;">
+                        <button class="outline small-btn" onclick="openEditGoal(${g.id})">Edit</button>
+                        <button class="outline small-btn" onclick="deleteGoal(${g.id})">Del</button>
+                    </div>
+                </div>
+                <div style="margin:0.75rem 0 0.25rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+                        <span><strong>${formatCurrency(current, g.currency)}</strong></span>
+                        <span style="color:var(--muted-color);">${formatCurrency(target, g.currency)}</span>
+                    </div>
+                    <progress class="${progressClass}" value="${pct}" max="100"></progress>
+                    <small>${pct}% saved</small>
+                </div>
+                ${contributeHtml}
+            </article>`;
+        }).join('');
+    } catch(err) {
+        notify(err.message || 'Failed to load goals', 'error');
+    }
+}
+
+function filterGoals(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b === btn);
+        b.classList.toggle('outline', b !== btn);
+    });
+    loadGoals();
+}
+
+function openAddGoal() {
+    document.getElementById('goal-modal-title').textContent = 'New Savings Goal';
+    document.getElementById('goal-id').value = '';
+    document.getElementById('goal-name').value = '';
+    document.getElementById('goal-target').value = '';
+    document.getElementById('goal-currency').value = 'USD';
+    document.getElementById('goal-icon').value = '🎯';
+    document.getElementById('goal-color').value = '#2ecc71';
+    document.getElementById('goal-deadline').value = '';
+    document.getElementById('goal-notes').value = '';
+    document.getElementById('goal-modal').showModal();
+}
+
+async function openEditGoal(id) {
+    try {
+        const g = await api.get(`/api/v1/savings-goals/${id}`);
+        document.getElementById('goal-modal-title').textContent = 'Edit Savings Goal';
+        document.getElementById('goal-id').value = g.id;
+        document.getElementById('goal-name').value = g.name;
+        document.getElementById('goal-target').value = parseFloat(g.target_amount);
+        document.getElementById('goal-currency').value = g.currency;
+        document.getElementById('goal-icon').value = g.icon;
+        document.getElementById('goal-color').value = g.color;
+        document.getElementById('goal-deadline').value = g.deadline || '';
+        document.getElementById('goal-notes').value = g.notes || '';
+        document.getElementById('goal-modal').showModal();
+    } catch(err) {
+        notify(err.message || 'Failed to load goal', 'error');
+    }
+}
+
+async function saveGoal(e) {
+    e.preventDefault();
+    const id = document.getElementById('goal-id').value;
+    const data = {
+        name: document.getElementById('goal-name').value.trim(),
+        target_amount: parseFloat(document.getElementById('goal-target').value),
+        currency: document.getElementById('goal-currency').value.toUpperCase(),
+        icon: document.getElementById('goal-icon').value || '🎯',
+        color: document.getElementById('goal-color').value || '#2ecc71',
+        deadline: document.getElementById('goal-deadline').value || null,
+        notes: document.getElementById('goal-notes').value.trim() || null,
+    };
+    try {
+        if (id) {
+            await api.put(`/api/v1/savings-goals/${id}`, data);
+            notify('Goal updated', 'success');
+        } else {
+            await api.post('/api/v1/savings-goals', data);
+            notify('Goal created', 'success');
+        }
+        document.getElementById('goal-modal').close();
+        loadGoals();
+    } catch(err) {
+        notify(err.message || 'Failed to save goal', 'error');
+    }
+}
+
+async function contribute(id) {
+    const input = document.getElementById(`contribute-${id}`);
+    const amount = parseFloat(input.value);
+    if (!amount || amount <= 0) {
+        notify('Enter a valid amount', 'error');
+        return;
+    }
+    try {
+        await api.put(`/api/v1/savings-goals/${id}/contribute`, { amount });
+        notify('Contribution added', 'success');
+        input.value = '';
+        loadGoals();
+    } catch(err) {
+        notify(err.message || 'Failed to contribute', 'error');
+    }
+}
+
+async function deleteGoal(id) {
+    if (confirm('Delete this savings goal?')) {
+        try {
+            await api.del(`/api/v1/savings-goals/${id}`);
+            notify('Goal deleted', 'success');
+            loadGoals();
+        } catch(err) {
+            notify(err.message || 'Failed to delete goal', 'error');
+        }
+    }
+}
+</script>
+{% endblock %}

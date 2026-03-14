@@ -15,7 +15,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 from app.database import Base
-from app.models import Category, Transaction, Budget, RecurringTransaction, CurrencyRate
+from app.models import Category, Transaction, Budget, RecurringTransaction, CurrencyRate, SavingsGoal
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
