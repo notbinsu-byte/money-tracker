@@ -1,12 +1,15 @@
-// Chart.js rendering functions
+// Chart.js rendering functions — Soft Pastel Style
 
 const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+// Shared font config for all charts
+const chartFont = { family: "'Patrick Hand', cursive", size: 13 };
+
 function getChartColors(count) {
     const palette = [
-        '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
-        '#1abc9c','#e67e22','#34495e','#fd79a8','#636e72',
-        '#a29bfe','#00cec9','#fab1a0','#74b9ff','#55efc4',
+        '#d7c4f2','#ffd6cc','#c8e6c9','#ffe4cc','#e1bee7',
+        '#b2ebf2','#ffccbc','#c5cae9','#f8bbd0','#cfd8dc',
+        '#ede7f6','#b2ebf2','#ffcdd2','#bbdefb','#dcedc8',
     ];
     const colors = [];
     for (let i = 0; i < count; i++) colors.push(palette[i % palette.length]);
@@ -17,27 +20,40 @@ function renderPieChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#333';
+    const textColor = isDark ? '#c2c7d0' : '#4a4458';
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: data.map(d => `${d.category_icon || ''} ${d.category_name}`),
             datasets: [{
                 data: data.map(d => parseFloat(d.total)),
-                backgroundColor: data.map(d => d.category_color || '#6c757d'),
+                backgroundColor: data.map(d => d.category_color || '#d7c4f2'),
                 borderWidth: 2,
+                borderColor: isDark ? '#2d2640' : '#ffffff',
+                hoverBorderWidth: 3,
+                hoverOffset: 8,
             }],
         },
         options: {
             responsive: true,
+            cutout: '55%',
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 }, color: textColor } },
+                legend: { position: 'bottom', labels: { padding: 14, font: { ...chartFont, size: 12 }, color: textColor, usePointStyle: true, pointStyle: 'circle' } },
                 tooltip: {
+                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
+                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
+                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
+                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
+                    borderWidth: 2,
+                    cornerRadius: 12,
+                    titleFont: chartFont,
+                    bodyFont: chartFont,
+                    padding: 10,
                     callbacks: {
                         label: ctx => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                             const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return `${ctx.label}: ${formatCurrency(ctx.parsed, currency)} (${pct}%)`;
+                            return ` ${ctx.label}: ${formatCurrency(ctx.parsed, currency)} (${pct}%)`;
                         }
                     }
                 }
@@ -50,8 +66,8 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#333';
-    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const textColor = isDark ? '#c2c7d0' : '#4a4458';
+    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'bar',
         data: {
@@ -60,16 +76,20 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
                 {
                     label: 'Income',
                     data: monthlyData.map(d => parseFloat(d.income)),
-                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
-                    borderColor: '#2ecc71',
-                    borderWidth: 1,
+                    backgroundColor: 'rgba(200, 230, 201, 0.6)',
+                    borderColor: '#a5d6a7',
+                    borderWidth: 2,
+                    borderRadius: 10,
+                    borderSkipped: false,
                 },
                 {
                     label: 'Expenses',
                     data: monthlyData.map(d => parseFloat(d.expense)),
-                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
-                    borderColor: '#e74c3c',
-                    borderWidth: 1,
+                    backgroundColor: 'rgba(255, 205, 210, 0.6)',
+                    borderColor: '#ef9a9a',
+                    borderWidth: 2,
+                    borderRadius: 10,
+                    borderSkipped: false,
                 },
             ],
         },
@@ -78,17 +98,29 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
+                    grid: { color: gridColor, drawBorder: false },
+                    border: { dash: [4, 4] },
                 },
                 x: {
-                    ticks: { color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont },
+                    grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor } },
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
+                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true, pointStyle: 'rectRounded' } },
+                tooltip: {
+                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
+                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
+                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
+                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
+                    borderWidth: 2,
+                    cornerRadius: 12,
+                    titleFont: chartFont,
+                    bodyFont: chartFont,
+                    padding: 10,
+                    callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` },
+                },
             },
         },
     });
@@ -98,8 +130,8 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#333';
-    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const textColor = isDark ? '#c2c7d0' : '#4a4458';
+    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -107,27 +139,46 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
             datasets: [{
                 label: 'Net Income',
                 data: monthlyData.map(d => parseFloat(d.net || (d.income - d.expense))),
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderColor: '#d7c4f2',
+                backgroundColor: 'rgba(215, 196, 242, 0.15)',
                 fill: true,
-                tension: 0.3,
+                tension: 0.4,
+                borderWidth: 2.5,
+                pointRadius: 6,
+                pointBackgroundColor: '#d7c4f2',
+                pointBorderColor: isDark ? '#2d2640' : '#ffffff',
+                pointBorderWidth: 2.5,
+                pointHoverRadius: 9,
+                pointStyle: 'circle',
             }],
         },
         options: {
             responsive: true,
             scales: {
                 y: {
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
+                    grid: { color: gridColor, drawBorder: false },
+                    border: { dash: [4, 4] },
                 },
                 x: {
-                    ticks: { color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont },
+                    grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor } },
-                tooltip: { callbacks: { label: ctx => `Net: ${formatCurrency(ctx.parsed.y, currency)}` } },
+                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true } },
+                tooltip: {
+                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
+                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
+                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
+                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
+                    borderWidth: 2,
+                    cornerRadius: 12,
+                    titleFont: chartFont,
+                    bodyFont: chartFont,
+                    padding: 10,
+                    callbacks: { label: ctx => ` Net: ${formatCurrency(ctx.parsed.y, currency)}` },
+                },
             },
         },
     });
@@ -137,8 +188,8 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#333';
-    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const textColor = isDark ? '#c2c7d0' : '#4a4458';
+    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -147,18 +198,31 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
                 {
                     label: 'Income',
                     data: data.map(d => parseFloat(d.income)),
-                    borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderColor: '#c8e6c9',
+                    backgroundColor: 'rgba(200, 230, 201, 0.1)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0.4,
+                    borderWidth: 2.5,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#c8e6c9',
+                    pointBorderColor: isDark ? '#2d2640' : '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 8,
+                    borderDash: [],
                 },
                 {
                     label: 'Expenses',
                     data: data.map(d => parseFloat(d.expense)),
-                    borderColor: '#e74c3c',
-                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderColor: '#ffcdd2',
+                    backgroundColor: 'rgba(255, 205, 210, 0.1)',
                     fill: false,
-                    tension: 0.3,
+                    tension: 0.4,
+                    borderWidth: 2.5,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#ffcdd2',
+                    pointBorderColor: isDark ? '#2d2640' : '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 8,
                 },
             ],
         },
@@ -167,17 +231,29 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
+                    grid: { color: gridColor, drawBorder: false },
+                    border: { dash: [4, 4] },
                 },
                 x: {
-                    ticks: { color: textColor },
-                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: chartFont },
+                    grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor } },
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` } },
+                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true } },
+                tooltip: {
+                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
+                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
+                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
+                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
+                    borderWidth: 2,
+                    cornerRadius: 12,
+                    titleFont: chartFont,
+                    bodyFont: chartFont,
+                    padding: 10,
+                    callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` },
+                },
             },
         },
     });

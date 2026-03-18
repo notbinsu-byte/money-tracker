@@ -1,85 +1,726 @@
-/* Custom styles for Money Tracker */
+/* ===== Cutesy Lavender Dream — Crayon / Sketch Aesthetic ===== */
+
+/* ---------- Light Theme Palette ---------- */
 :root {
-    --nav-brand-color: #2ecc71;
-    --warning-color: #f39c12;
+    --nav-brand-color: #b39ddb;
+    --warning-color: #ffe0b2;
+    --lavender: #b39ddb;
+    --lavender-dark: #9575cd;
+    --lavender-light: #d1c4e9;
+    --peach: #ffccbc;
+    --peach-dark: #ffab91;
+    --sage: #a5d6a7;
+    --sage-dark: #81c784;
+    --apricot: #ffe0b2;
+    --rose: #ef9a9a;
+    --rose-dark: #e57373;
+    --bg-main: #f5f0ff;
+    --card-bg: #ffffff;
+    --card-border: rgba(179, 157, 219, 0.35);
+    --card-shadow: rgba(149, 117, 205, 0.10);
+    --card-shadow-hover: rgba(149, 117, 205, 0.20);
+    --text-primary: #4a4458;
+    --text-muted: #8e85a0;
+    --thead-bg: rgba(179, 157, 219, 0.12);
+    --focus-ring: rgba(179, 157, 219, 0.5);
+    --sketch-border: 2.5px solid var(--lavender);
+    --doodle-color: #d1c4e9;
 }
 
 [data-theme="dark"] {
-    --nav-brand-color: #27ae60;
-    --warning-color: #f1c40f;
+    --nav-brand-color: #ce93d8;
+    --warning-color: #ffe0b2;
+    --lavender: #ce93d8;
+    --lavender-dark: #ba68c8;
+    --lavender-light: #e1bee7;
+    --peach: #ffccbc;
+    --peach-dark: #ffab91;
+    --sage: #a5d6a7;
+    --sage-dark: #81c784;
+    --apricot: #ffe0b2;
+    --rose: #ef9a9a;
+    --rose-dark: #e57373;
+    --bg-main: #1a1625;
+    --card-bg: #2d2640;
+    --card-border: rgba(206, 147, 216, 0.3);
+    --card-shadow: rgba(0, 0, 0, 0.25);
+    --card-shadow-hover: rgba(0, 0, 0, 0.4);
+    --text-primary: #e8e0f0;
+    --text-muted: #a89bc0;
+    --thead-bg: rgba(206, 147, 216, 0.12);
+    --focus-ring: rgba(206, 147, 216, 0.5);
+    --sketch-border: 2.5px solid var(--lavender);
+    --doodle-color: #4a3860;
 }
 
-/* Navigation */
+/* ---------- Sketchy SVG border image ---------- */
+/* A wavy hand-drawn-look border using inline SVG */
+
+/* ---------- Global / Body ---------- */
+body {
+    font-family: 'Nunito', sans-serif !important;
+    background: var(--bg-main) !important;
+    background-image:
+        radial-gradient(circle at 15% 20%, rgba(179,157,219,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 80%, rgba(255,204,188,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(165,214,167,0.05) 0%, transparent 60%) !important;
+}
+
+/* Headings get the handwritten font */
+h1, h2, h3, h4, h5, h6,
+article > header,
+.nav-brand,
+.chat-header h2 {
+    font-family: 'Patrick Hand', cursive !important;
+    letter-spacing: 0.02em;
+}
+
+/* ---------- Navigation ---------- */
 nav {
     padding: 0.5rem 0;
+    overflow: visible !important;
+}
+
+/* Neutralize Pico's negative margins that push brand flush-left.
+   Pico applies: margin-left: calc(var(--pico-nav-element-spacing-horizontal) * -1)
+   on nav ul:first-of-type, pulling the brand to the container edge. */
+nav > ul:first-of-type {
+    margin-left: 0 !important;
+    padding-left: 5rem !important;
+}
+
+/* Allow nav links to wrap at all widths */
+nav > ul:last-of-type {
+    flex-wrap: wrap;
+}
+
+nav a {
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 0.02em;
 }
 
 nav a.active {
     font-weight: bold;
-    border-bottom: 2px solid var(--primary);
+    border-bottom: 3px dashed var(--lavender);
 }
 
 .nav-brand {
-    font-size: 1.2rem;
+    font-size: 1.35rem !important;
     color: var(--nav-brand-color) !important;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center;
+    gap: 0.15rem;
+    overflow: visible !important;
 }
 
-/* Small buttons */
+.brand-penguin-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    line-height: 0;
+    position: relative;
+}
+
+/* Cash money rain during jump & wave phases */
+.brand-penguin-wrap::before,
+.brand-penguin-wrap::after {
+    position: absolute;
+    font-size: 1.3rem;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.brand-penguin-wrap::before {
+    content: '💸';
+    top: 0;
+    left: -8px;
+    animation: cashRainLeft 12s ease-in-out infinite;
+}
+
+.brand-penguin-wrap::after {
+    content: '💰';
+    top: 0;
+    right: -8px;
+    animation: cashRainRight 12s ease-in-out infinite;
+}
+
+/* Left side cash — appears during jump phase (~63-73%) */
+@keyframes cashRainLeft {
+    0%    { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    62%   { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    64%   { opacity: 1; transform: translateY(-20px) rotate(-15deg) scale(1.1); }
+    66%   { opacity: 0.9; transform: translateY(5px) rotate(10deg) scale(0.9); }
+    68%   { opacity: 1; transform: translateY(-15px) rotate(-20deg) scale(1.2); }
+    70%   { opacity: 0.7; transform: translateY(10px) rotate(15deg) scale(0.8); }
+    73%   { opacity: 0; transform: translateY(30px) rotate(25deg) scale(0.3); }
+    /* reappear during happy wave */
+    85%   { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    87%   { opacity: 1; transform: translateY(-18px) rotate(-10deg) scale(1); }
+    89%   { opacity: 0.8; transform: translateY(0px) rotate(12deg) scale(0.9); }
+    91%   { opacity: 1; transform: translateY(-12px) rotate(-18deg) scale(1.1); }
+    93%   { opacity: 0.5; transform: translateY(15px) rotate(20deg) scale(0.6); }
+    95%   { opacity: 0; transform: translateY(30px) rotate(30deg) scale(0.3); }
+    100%  { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+}
+
+/* Right side cash — slightly offset timing for variety */
+@keyframes cashRainRight {
+    0%    { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    63%   { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    65%   { opacity: 1; transform: translateY(-22px) rotate(12deg) scale(1); }
+    67%   { opacity: 0.9; transform: translateY(0px) rotate(-8deg) scale(1.1); }
+    69%   { opacity: 1; transform: translateY(-10px) rotate(18deg) scale(0.9); }
+    71%   { opacity: 0.6; transform: translateY(12px) rotate(-15deg) scale(0.7); }
+    74%   { opacity: 0; transform: translateY(35px) rotate(-25deg) scale(0.3); }
+    /* reappear during happy wave */
+    86%   { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+    88%   { opacity: 1; transform: translateY(-20px) rotate(15deg) scale(1.1); }
+    90%   { opacity: 0.9; transform: translateY(3px) rotate(-10deg) scale(0.85); }
+    92%   { opacity: 1; transform: translateY(-14px) rotate(20deg) scale(1.05); }
+    94%   { opacity: 0.4; transform: translateY(18px) rotate(-22deg) scale(0.5); }
+    96%   { opacity: 0; transform: translateY(35px) rotate(-30deg) scale(0.3); }
+    100%  { opacity: 0; transform: translateY(-10px) rotate(0deg) scale(0.3); }
+}
+
+/* ===== Pixel Art Penguin Sprite ===== */
+/*
+ * Sprite strip: 12 frames, each 120x120 native, total 1440x120
+ * Pixel art on 6px grid (20x20 pixel grid per frame)
+ * Displayed at 120x120px (1:1 crisp, image-rendering: pixelated)
+ * Frame map:
+ *   0  idle          5  sleep-lean
+ *   1  blink-half    6  sleep (zzz)
+ *   2  blink-closed  7  yawn
+ *   3  waddle-left   8  jump-up
+ *   4  waddle-right  9  land-squash
+ *                   10  wave-left
+ *                   11  wave-right
+ */
+
+.brand-penguin {
+    display: inline-block;
+    width: 120px !important;
+    height: 120px !important;
+    min-width: 120px !important;
+    min-height: 120px !important;
+    flex-shrink: 0;
+    background: url('/static/img/penguin-sprite.svg') no-repeat;
+    background-size: 1440px 120px; /* 12 frames * 120px each (native 1:1) */
+    background-position: 0 0;    /* frame 0 */
+    image-rendering: auto;
+    vertical-align: middle;
+    margin-right: 0;
+    position: relative;
+    cursor: default;
+    font-size: 0;          /* hide emoji text */
+    color: transparent;
+    overflow: hidden;
+    filter: drop-shadow(2px 3px 2px rgba(149,117,205,0.25));
+    transform-origin: bottom center;
+
+    /* Sprite frame animation — the main show */
+    animation:
+        penguinFrames 12s steps(1) infinite,
+        penguinMotion 12s ease-in-out infinite;
+}
+
+/* Zzz floats up during sleep */
+.brand-penguin::after {
+    content: 'z z z';
+    position: absolute;
+    top: -6px;
+    right: -32px;
+    font-size: 1.2rem;
+    font-family: 'Patrick Hand', cursive;
+    color: var(--lavender);
+    opacity: 0;
+    pointer-events: none;
+    letter-spacing: 5px;
+    animation: zzzFloat 12s ease-in-out infinite;
+}
+
+/* Sparkle on happy moments */
+.brand-penguin::before {
+    content: '\2728';
+    position: absolute;
+    top: -6px;
+    left: -14px;
+    font-size: 1.4rem;
+    opacity: 0;
+    pointer-events: none;
+    animation: sparkleAppear 12s ease-in-out infinite;
+}
+
+/* Hover — fast wave animation */
+.brand-penguin:hover {
+    animation:
+        penguinWaveFrames 0.4s steps(1) infinite,
+        penguinHoverBounce 0.4s ease-in-out infinite;
+}
+
+.brand-penguin:hover::after {
+    animation: none;
+    opacity: 0;
+}
+
+.brand-penguin:hover::before {
+    animation: penguinHoverSparkle 0.6s ease-in-out infinite;
+}
+
+/*
+ * Frame-stepping keyframes
+ * background-position-x = -(frame# * 48)px
+ *
+ * Timeline (12s):
+ *  0.0-1.5s  idle + blink       (frames 0,1,2,1,0)
+ *  1.5-3.5s  waddle             (frames 3,4,3,4,3,4,0)
+ *  3.5-5.0s  yawn               (frames 0,7,7,0)
+ *  5.0-8.0s  sleepy → sleep     (frames 1,5,6,6,6,6,5)
+ *  8.0-9.0s  jolt awake → jump  (frames 0,8,9,8,0)
+ *  9.0-10.5s look around blink  (frames 0,1,2,1,0,0)
+ * 10.5-12.0s happy wave         (frames 10,11,10,11,0)
+ */
+@keyframes penguinFrames {
+    /* ---- idle + blink ---- */
+    0%      { background-position-x: 0; }            /* frame 0: idle */
+    8.33%   { background-position-x: -120px; }       /* frame 1: blink-half */
+    10.42%  { background-position-x: -240px; }       /* frame 2: blink-closed */
+    11.46%  { background-position-x: -120px; }       /* frame 1: blink-half */
+    12.5%   { background-position-x: 0; }            /* frame 0: idle */
+
+    /* ---- waddle ---- */
+    12.51%  { background-position-x: -360px; }       /* frame 3: waddle-left */
+    15.63%  { background-position-x: -480px; }       /* frame 4: waddle-right */
+    18.75%  { background-position-x: -360px; }       /* frame 3: waddle-left */
+    21.88%  { background-position-x: -480px; }       /* frame 4: waddle-right */
+    25%     { background-position-x: -360px; }       /* frame 3: waddle-left */
+    27.08%  { background-position-x: -480px; }       /* frame 4: waddle-right */
+    29.17%  { background-position-x: 0; }            /* frame 0: idle */
+
+    /* ---- yawn ---- */
+    29.18%  { background-position-x: 0; }            /* frame 0: idle */
+    33.33%  { background-position-x: -840px; }       /* frame 7: yawn */
+    39.58%  { background-position-x: -840px; }       /* frame 7: yawn hold */
+    41.67%  { background-position-x: 0; }            /* frame 0: idle */
+
+    /* ---- sleepy → sleep ---- */
+    41.68%  { background-position-x: -120px; }       /* frame 1: blink-half (drowsy) */
+    43.75%  { background-position-x: -600px; }       /* frame 5: sleep-lean */
+    45.83%  { background-position-x: -720px; }       /* frame 6: deep sleep */
+    50%     { background-position-x: -720px; }       /* frame 6: deep sleep */
+    54.17%  { background-position-x: -720px; }       /* frame 6: deep sleep */
+    58.33%  { background-position-x: -720px; }       /* frame 6: deep sleep */
+    60.42%  { background-position-x: -600px; }       /* frame 5: sleep-lean (stirring) */
+
+    /* ---- jolt awake → jump ---- */
+    62.5%   { background-position-x: 0; }            /* frame 0: idle (eyes open!) */
+    64.58%  { background-position-x: -960px; }       /* frame 8: jump-up */
+    68.75%  { background-position-x: -1080px; }      /* frame 9: land-squash */
+    70.83%  { background-position-x: -960px; }       /* frame 8: jump-up again */
+    72.92%  { background-position-x: -1080px; }      /* frame 9: land-squash */
+    75%     { background-position-x: 0; }            /* frame 0: idle */
+
+    /* ---- look around + blink ---- */
+    75.01%  { background-position-x: 0; }            /* frame 0: idle */
+    79.17%  { background-position-x: -120px; }       /* frame 1: blink-half */
+    80.21%  { background-position-x: -240px; }       /* frame 2: blink-closed */
+    81.25%  { background-position-x: -120px; }       /* frame 1: blink-half */
+    83.33%  { background-position-x: 0; }            /* frame 0: idle */
+
+    /* ---- happy wave ---- */
+    85.42%  { background-position-x: -1200px; }      /* frame 10: wave-left */
+    87.5%   { background-position-x: -1320px; }      /* frame 11: wave-right */
+    89.58%  { background-position-x: -1200px; }      /* frame 10: wave-left */
+    91.67%  { background-position-x: -1320px; }      /* frame 11: wave-right */
+    93.75%  { background-position-x: -1200px; }      /* frame 10: wave-left */
+    95.83%  { background-position-x: 0; }            /* frame 0: idle */
+    100%    { background-position-x: 0; }            /* frame 0: idle */
+}
+
+/*
+ * Body motion — tilts, bounces, breathing synced to frames
+ */
+@keyframes penguinMotion {
+    /* idle + blink */
+    0%    { transform: translateY(0) rotate(0deg) scale(1); }
+    12.5% { transform: translateY(0) rotate(0deg) scale(1); }
+
+    /* waddle — rocking side to side */
+    14%   { transform: translateY(-3px) translateX(-4px) rotate(-7deg) scale(1); }
+    17%   { transform: translateY(-3px) translateX(4px) rotate(7deg) scale(1); }
+    20%   { transform: translateY(-3px) translateX(-4px) rotate(-7deg) scale(1); }
+    23%   { transform: translateY(-3px) translateX(4px) rotate(7deg) scale(1); }
+    26%   { transform: translateY(-2px) translateX(-3px) rotate(-5deg) scale(1); }
+    29%   { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+
+    /* yawn — stretch tall */
+    33%   { transform: translateY(-4px) rotate(-2deg) scaleY(1.12) scaleX(0.9); }
+    38%   { transform: translateY(-5px) rotate(0deg) scaleY(1.15) scaleX(0.88); }
+    41%   { transform: translateY(0) rotate(0deg) scaleY(0.92) scaleX(1.06); }
+    42%   { transform: translateY(0) rotate(0deg) scale(1); }
+
+    /* sleepy lean */
+    44%   { transform: translateY(0) rotate(-5deg) scale(1); }
+    46%   { transform: translateY(3px) rotate(-12deg) scale(0.97); }
+
+    /* sleep — gentle breathing */
+    48%   { transform: translateY(3px) rotate(-12deg) scaleY(0.95) scaleX(1.03); }
+    51%   { transform: translateY(1px) rotate(-11deg) scaleY(1.02) scaleX(0.98); }
+    54%   { transform: translateY(3px) rotate(-12deg) scaleY(0.95) scaleX(1.03); }
+    57%   { transform: translateY(1px) rotate(-11deg) scaleY(1.02) scaleX(0.98); }
+    60%   { transform: translateY(3px) rotate(-10deg) scale(0.97); }
+
+    /* jolt awake — big spring up */
+    62%   { transform: translateY(3px) rotate(-10deg) scale(0.97); }
+    63%   { transform: translateY(-14px) rotate(6deg) scale(1.12); }
+    65%   { transform: translateY(0) rotate(-2deg) scaleY(0.88) scaleX(1.1); }
+    67%   { transform: translateY(-10px) rotate(4deg) scale(1.1); }
+    69%   { transform: translateY(0) rotate(0deg) scaleY(0.85) scaleX(1.12); }
+    71%   { transform: translateY(-8px) rotate(2deg) scale(1.06); }
+    73%   { transform: translateY(0) rotate(0deg) scaleY(0.9) scaleX(1.08); }
+    75%   { transform: translateY(0) rotate(0deg) scale(1); }
+
+    /* look around */
+    77%   { transform: translateY(0) rotate(6deg) scale(1); }
+    79%   { transform: translateY(0) rotate(-6deg) scale(1); }
+    81%   { transform: translateY(0) rotate(4deg) scale(1); }
+    83%   { transform: translateY(0) rotate(0deg) scale(1); }
+
+    /* happy wave — gentle bounce */
+    85%   { transform: translateY(0) rotate(0deg) scale(1); }
+    86%   { transform: translateY(-4px) rotate(-4deg) scale(1.04); }
+    88%   { transform: translateY(0) rotate(4deg) scale(1); }
+    90%   { transform: translateY(-4px) rotate(-4deg) scale(1.04); }
+    92%   { transform: translateY(0) rotate(4deg) scale(1); }
+    94%   { transform: translateY(-3px) rotate(-3deg) scale(1.03); }
+    96%   { transform: translateY(0) rotate(0deg) scale(1); }
+
+    100%  { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+/* Zzz during sleep phase (~46%–62%) */
+@keyframes zzzFloat {
+    0%    { opacity: 0; transform: translateY(0) scale(0.5); }
+    44%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    47%   { opacity: 0.8; transform: translateY(-2px) scale(0.9); }
+    50%   { opacity: 1; transform: translateY(-6px) scale(1.1); }
+    53%   { opacity: 0.7; transform: translateY(-10px) scale(0.95); }
+    56%   { opacity: 0.9; transform: translateY(-6px) scale(1.05); }
+    59%   { opacity: 0.5; transform: translateY(-14px) scale(0.8); }
+    62%   { opacity: 0; transform: translateY(-18px) scale(0.5); }
+    100%  { opacity: 0; transform: translateY(0) scale(0.5); }
+}
+
+/* Sparkle during jump/wave (~63%–72%, 85%–94%) */
+@keyframes sparkleAppear {
+    0%    { opacity: 0; transform: scale(0.5) rotate(0deg); }
+    62%   { opacity: 0; transform: scale(0.5) rotate(0deg); }
+    64%   { opacity: 1; transform: scale(1.3) rotate(20deg); }
+    67%   { opacity: 0.7; transform: scale(0.9) rotate(-10deg); }
+    70%   { opacity: 1; transform: scale(1.4) rotate(15deg); }
+    73%   { opacity: 0; transform: scale(0.5) rotate(30deg); }
+    84%   { opacity: 0; transform: scale(0.5) rotate(0deg); }
+    86%   { opacity: 1; transform: scale(1.2) rotate(10deg); }
+    89%   { opacity: 0.6; transform: scale(0.8) rotate(-15deg); }
+    92%   { opacity: 1; transform: scale(1.3) rotate(20deg); }
+    95%   { opacity: 0; transform: scale(0.5) rotate(30deg); }
+    100%  { opacity: 0; transform: scale(0.5) rotate(0deg); }
+}
+
+/* Hover: wave frames fast */
+@keyframes penguinWaveFrames {
+    0%    { background-position-x: -1200px; }  /* frame 10: wave-left */
+    50%   { background-position-x: -1320px; }  /* frame 11: wave-right */
+    100%  { background-position-x: -1200px; }  /* frame 10: wave-left */
+}
+
+/* Hover: excited bounce motion */
+@keyframes penguinHoverBounce {
+    0%    { transform: translateY(0) rotate(0deg) scale(1); }
+    25%   { transform: translateY(-8px) rotate(-10deg) scale(1.12); }
+    50%   { transform: translateY(0) rotate(10deg) scaleY(0.88) scaleX(1.1); }
+    75%   { transform: translateY(-8px) rotate(-8deg) scale(1.1); }
+    100%  { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+/* Sparkles while hovering */
+@keyframes penguinHoverSparkle {
+    0%    { opacity: 0; transform: scale(0.5) rotate(0deg) translateY(0); }
+    30%   { opacity: 1; transform: scale(1.4) rotate(25deg) translateY(-6px); }
+    60%   { opacity: 0.7; transform: scale(1) rotate(-15deg) translateY(-10px); }
+    100%  { opacity: 0; transform: scale(0.5) rotate(40deg) translateY(-14px); }
+}
+
+/* ---------- Small Buttons ---------- */
 .small-btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
 }
 
-/* Notification */
+/* ---------- Cards (article) — Sketchy hand-drawn look ---------- */
+article {
+    border-radius: 18px !important;
+    border: 2.5px solid var(--card-border) !important;
+    border-style: solid !important;
+    background: var(--card-bg) !important;
+    box-shadow:
+        4px 4px 0px var(--doodle-color),
+        0 2px 12px var(--card-shadow) !important;
+    transition: box-shadow 0.25s ease, transform 0.25s ease !important;
+    position: relative;
+    overflow: visible !important;
+}
+
+article:hover {
+    box-shadow:
+        6px 6px 0px var(--doodle-color),
+        0 6px 20px var(--card-shadow-hover) !important;
+    transform: translateY(-3px) rotate(-0.3deg);
+}
+
+article > header {
+    font-weight: 600;
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1.1rem;
+    border-bottom: 2px dashed var(--card-border) !important;
+}
+
+#card-income h3 { color: var(--sage-dark); }
+#card-expense h3 { color: var(--rose-dark); }
+
+/* Decorative sparkle on first card on the page */
+article:first-child::before {
+    content: '\2726';
+    position: absolute;
+    top: -10px;
+    right: -8px;
+    font-size: 1.3rem;
+    color: var(--lavender);
+    animation: sparkleFloat 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes sparkleFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+    50% { transform: translateY(-5px) rotate(15deg); opacity: 1; }
+}
+
+/* ---------- Buttons — puffy crayon style ---------- */
+button:not(.outline):not(.secondary):not(.contrast):not(#theme-toggle):not(.chip):not(.filter-btn):not(.send-btn),
+[type="submit"]:not(.outline):not(.secondary):not(.contrast) {
+    background: linear-gradient(135deg, var(--lavender), var(--lavender-dark)) !important;
+    border: 2.5px solid var(--lavender-dark) !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    box-shadow: 3px 3px 0px rgba(149,117,205,0.3);
+    transition: all 0.15s ease;
+}
+
+button:not(.outline):not(.secondary):not(.contrast):not(#theme-toggle):not(.chip):not(.filter-btn):not(.send-btn):hover,
+[type="submit"]:not(.outline):not(.secondary):not(.contrast):hover {
+    background: linear-gradient(135deg, var(--lavender-dark), #7e57c2) !important;
+    border-color: #7e57c2 !important;
+    box-shadow: 2px 2px 0px rgba(149,117,205,0.2);
+    transform: translate(1px, 1px);
+}
+
+button:not(.outline):not(.secondary):not(.contrast):not(#theme-toggle):not(.chip):not(.filter-btn):not(.send-btn):active,
+[type="submit"]:not(.outline):not(.secondary):not(.contrast):active {
+    box-shadow: 0px 0px 0px rgba(149,117,205,0.1);
+    transform: translate(3px, 3px);
+}
+
+button.outline {
+    border: 2.5px dashed var(--lavender) !important;
+    color: var(--lavender) !important;
+    border-radius: 14px !important;
+    font-family: 'Patrick Hand', cursive !important;
+    background: transparent !important;
+}
+
+button.outline:hover {
+    background: var(--lavender) !important;
+    color: #fff !important;
+    border-style: solid !important;
+}
+
+button.secondary {
+    background: linear-gradient(135deg, var(--peach), var(--peach-dark)) !important;
+    border: 2.5px solid var(--peach-dark) !important;
+    border-radius: 14px !important;
+    color: #5d4037 !important;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive !important;
+    box-shadow: 3px 3px 0px rgba(255,171,145,0.3);
+}
+
+button.secondary:hover {
+    background: linear-gradient(135deg, var(--peach-dark), #ff8a65) !important;
+    box-shadow: 2px 2px 0px rgba(255,171,145,0.2);
+    transform: translate(1px, 1px);
+}
+
+button.contrast {
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark)) !important;
+    border: 2.5px solid var(--rose-dark) !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive !important;
+    box-shadow: 3px 3px 0px rgba(239,154,154,0.3);
+}
+
+button.contrast:hover {
+    background: linear-gradient(135deg, var(--rose-dark), #ef5350) !important;
+    box-shadow: 2px 2px 0px rgba(239,154,154,0.2);
+    transform: translate(1px, 1px);
+}
+
+/* ---------- Form Inputs — notebook-line style ---------- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+select,
+textarea {
+    border-radius: 12px !important;
+    border: 2px dashed var(--card-border) !important;
+    font-family: 'Nunito', sans-serif !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):focus,
+select:focus,
+textarea:focus {
+    border-color: var(--lavender) !important;
+    border-style: solid !important;
+    box-shadow: 0 0 0 3px var(--focus-ring), 3px 3px 0px var(--doodle-color) !important;
+}
+
+/* ---------- Labels ---------- */
+label {
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1.05rem;
+}
+
+/* ---------- Dialogs / Modals ---------- */
+dialog article {
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 22px !important;
+    border: 3px solid var(--lavender) !important;
+    box-shadow: 6px 6px 0px var(--doodle-color) !important;
+}
+
+/* ---------- Tables — lined notebook look ---------- */
+table {
+    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+table thead th {
+    background: var(--thead-bg) !important;
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+}
+
+table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+table tbody tr {
+    border-bottom: 1.5px dashed var(--card-border) !important;
+}
+
+/* ---------- Notification — puffy speech bubble ---------- */
 .notification {
     position: fixed;
     top: 1rem;
     right: 1rem;
     padding: 0.75rem 1.5rem;
-    border-radius: 8px;
+    border-radius: 18px;
     z-index: 9999;
     animation: slideIn 0.3s ease;
     max-width: 400px;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.05rem;
+    border: 2.5px solid transparent;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.08);
 }
 
 .notification.success {
-    background: #27ae60;
-    color: white;
+    background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+    border-color: var(--sage-dark);
+    color: #1b5e20;
+}
+
+.notification.success::before {
+    content: '\2728 ';
 }
 
 .notification.error {
-    background: #e74c3c;
-    color: white;
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    border-color: var(--rose-dark);
+    color: #fff;
+}
+
+.notification.error::before {
+    content: '\2639 ';
 }
 
 .notification.info {
-    background: #3498db;
-    color: white;
+    background: linear-gradient(135deg, var(--lavender-light), var(--lavender));
+    border-color: var(--lavender);
+    color: #4a148c;
+}
+
+.notification.info::before {
+    content: '\2606 ';
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from { transform: translateX(100%) rotate(3deg); opacity: 0; }
+    to { transform: translateX(0) rotate(0deg); opacity: 1; }
 }
 
 @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
+    from { transform: translateX(0) rotate(0deg); opacity: 1; }
+    to { transform: translateX(100%) rotate(3deg); opacity: 0; }
 }
 
-/* Cards */
-article > header {
-    font-weight: 600;
+/* ---------- Theme Toggle ---------- */
+#theme-toggle {
+    padding: 0.25rem 0.5rem;
+    border: none !important;
+    background: none !important;
+    font-size: 1.2rem;
+    cursor: pointer;
 }
 
-#card-income h3 { color: var(--ins-color); }
-#card-expense h3 { color: var(--del-color); }
+#theme-toggle:hover {
+    background: none !important;
+    transform: rotate(20deg) !important;
+    box-shadow: none !important;
+    transition: transform 0.2s ease;
+}
 
-/* Budget progress */
+/* ---------- Budget / Progress Bars — crayon fills ---------- */
 .budget-alert {
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--muted-border-color);
+    border-bottom: 2px dashed var(--card-border);
 }
 
 .budget-alert:last-child {
@@ -87,34 +728,101 @@ article > header {
     margin-bottom: 0;
 }
 
-/* Category items */
+progress {
+    height: 0.85rem !important;
+    border-radius: 10px;
+    border: 2px solid var(--card-border) !important;
+    overflow: hidden;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background: rgba(179, 157, 219, 0.1) !important;
+}
+
+progress::-webkit-progress-bar {
+    background: rgba(179, 157, 219, 0.1) !important;
+    border-radius: 10px;
+}
+
+progress.progress-green::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--sage), var(--sage-dark)) !important;
+    border-radius: 10px;
+}
+progress.progress-yellow::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--apricot), #ffb74d) !important;
+    border-radius: 10px;
+}
+progress.progress-red::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--rose), var(--rose-dark)) !important;
+    border-radius: 10px;
+}
+
+progress.progress-green::-moz-progress-bar {
+    background: linear-gradient(90deg, var(--sage), var(--sage-dark)) !important;
+    border-radius: 10px;
+}
+progress.progress-yellow::-moz-progress-bar {
+    background: linear-gradient(90deg, var(--apricot), #ffb74d) !important;
+    border-radius: 10px;
+}
+progress.progress-red::-moz-progress-bar {
+    background: linear-gradient(90deg, var(--rose), var(--rose-dark)) !important;
+    border-radius: 10px;
+}
+
+/* ---------- Category Items ---------- */
 .category-item:hover {
-    background: var(--card-sectionning-background-color);
+    background: rgba(179, 157, 219, 0.08);
 }
 
-/* Theme toggle */
-#theme-toggle {
-    padding: 0.25rem 0.5rem;
-    border: none;
-    background: none;
-    font-size: 1.2rem;
-    cursor: pointer;
+/* ---------- Drop Zone — dashed crayon border ---------- */
+#drop-zone {
+    border: 3px dashed var(--lavender-light) !important;
+    border-radius: 18px !important;
 }
 
-/* Tables */
-table {
-    font-size: 0.9rem;
+#drop-zone:hover {
+    border-color: var(--lavender) !important;
+    background: rgba(179, 157, 219, 0.05);
 }
 
-/* Responsive */
+/* ---------- Footer — cute text ---------- */
+footer {
+    text-align: center;
+}
+
+footer hr {
+    border-top: 2px dashed var(--card-border) !important;
+    border-bottom: none !important;
+}
+
+footer small {
+    font-family: 'Patrick Hand', cursive !important;
+    font-size: 1rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+/* ---------- hgroup (page titles) ---------- */
+hgroup h2 {
+    position: relative;
+    display: inline-block;
+}
+
+hgroup h2::after {
+    content: ' \2728';
+    font-size: 0.7em;
+}
+
+/* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
     nav ul {
         flex-wrap: wrap;
         gap: 0.25rem;
     }
 
-    nav ul li a {
-        font-size: 0.85rem;
+    nav ul li a:not(.nav-brand) {
+        font-size: 0.85rem !important;
         padding: 0.25rem 0.5rem;
     }
 
@@ -130,81 +838,34 @@ table {
         padding: 0.2rem 0.4rem;
         font-size: 0.75rem;
     }
-}
 
-/* Dialog/Modal improvements */
-dialog article {
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-/* Drop zone hover */
-#drop-zone:hover {
-    border-color: var(--primary);
-}
-
-/* Progress bar custom color support */
-progress {
-    height: 0.75rem !important;
-    border-radius: 4px;
-    border: none !important;
-    overflow: hidden;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    background: var(--muted-border-color) !important;
-}
-
-progress::-webkit-progress-bar {
-    background: var(--muted-border-color) !important;
-    border-radius: 4px;
-}
-
-progress.progress-green::-webkit-progress-value {
-    background: #2ecc71 !important;
-    border-radius: 4px;
-}
-progress.progress-yellow::-webkit-progress-value {
-    background: #f39c12 !important;
-    border-radius: 4px;
-}
-progress.progress-red::-webkit-progress-value {
-    background: #e74c3c !important;
-    border-radius: 4px;
-}
-
-progress.progress-green::-moz-progress-bar {
-    background: #2ecc71 !important;
-    border-radius: 4px;
-}
-progress.progress-yellow::-moz-progress-bar {
-    background: #f39c12 !important;
-    border-radius: 4px;
-}
-progress.progress-red::-moz-progress-bar {
-    background: #e74c3c !important;
-    border-radius: 4px;
+    /* Reduce sketch effects on mobile for clarity */
+    article {
+        box-shadow: 3px 3px 0px var(--doodle-color), 0 1px 6px var(--card-shadow) !important;
+    }
 }
 
 /* ===== Savings Goals ===== */
 .goal-card {
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .goal-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 6px 6px 0px var(--doodle-color), 0 6px 20px var(--card-shadow-hover) !important;
 }
 
 .goal-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    font-size: 1.3rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 1.4rem;
     flex-shrink: 0;
     color: #fff;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
 }
 
 .contribute-row {
@@ -229,15 +890,19 @@ progress.progress-red::-moz-progress-bar {
 }
 
 .filter-btn {
-    font-size: 0.85rem !important;
+    font-size: 0.9rem !important;
     padding: 0.3rem 0.75rem !important;
     margin-bottom: 0 !important;
+    border-radius: 14px !important;
+    font-family: 'Patrick Hand', cursive !important;
 }
 
 .filter-btn.active {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-    color: var(--primary-inverse) !important;
+    background: var(--lavender) !important;
+    border-color: var(--lavender) !important;
+    color: #fff !important;
+    border-style: solid !important;
+    box-shadow: 2px 2px 0px rgba(149,117,205,0.2);
 }
 
 /* ===== AI Chat ===== */
@@ -261,22 +926,36 @@ progress.progress-red::-moz-progress-bar {
     margin: 0;
 }
 
+/* Cute sparkle after chat title */
+.chat-header h2::after {
+    content: ' \2728';
+    font-size: 0.7em;
+}
+
 .ai-status-badge {
     display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive;
+    border: 2px solid transparent;
 }
 
 .ai-status-badge.online {
-    background: #2ecc71;
-    color: #fff;
+    background: var(--sage);
+    color: #1b5e20;
+    border-color: var(--sage-dark);
+}
+
+.ai-status-badge.online::before {
+    content: '\2714 ';
 }
 
 .ai-status-badge.offline {
-    background: #e74c3c;
+    background: var(--rose);
     color: #fff;
+    border-color: var(--rose-dark);
 }
 
 /* Chat messages area */
@@ -284,9 +963,9 @@ progress.progress-red::-moz-progress-bar {
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
-    border: 1px solid var(--muted-border-color);
-    border-radius: 8px;
-    background: var(--card-background-color);
+    border: 2.5px dashed var(--card-border);
+    border-radius: 18px;
+    background: var(--card-bg);
     scroll-behavior: smooth;
 }
 
@@ -294,17 +973,24 @@ progress.progress-red::-moz-progress-bar {
 .chat-welcome {
     text-align: center;
     padding: 2rem 1rem;
-    color: var(--muted-color);
+    color: var(--text-muted);
 }
 
 .welcome-icon {
-    font-size: 3rem;
+    font-size: 3.5rem;
     margin-bottom: 0.5rem;
+    animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
 }
 
 .chat-welcome h3 {
     color: var(--color);
     margin-bottom: 0.5rem;
+    font-family: 'Patrick Hand', cursive !important;
 }
 
 .chat-welcome p {
@@ -319,22 +1005,30 @@ progress.progress-red::-moz-progress-bar {
 }
 
 .chip {
-    background: var(--card-sectionning-background-color) !important;
-    color: var(--color) !important;
-    border: 1px solid var(--muted-border-color) !important;
+    background: rgba(179, 157, 219, 0.1) !important;
+    color: var(--lavender-dark) !important;
+    border: 2px dashed var(--card-border) !important;
     padding: 0.4rem 0.75rem !important;
-    border-radius: 16px !important;
+    border-radius: 20px !important;
     font-size: 0.85rem;
+    font-family: 'Patrick Hand', cursive !important;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    transition: all 0.2s ease;
     width: auto !important;
     display: inline-block;
 }
 
+[data-theme="dark"] .chip {
+    color: var(--lavender-light) !important;
+}
+
 .chip:hover {
-    background: var(--primary) !important;
-    color: var(--primary-inverse) !important;
-    border-color: var(--primary) !important;
+    background: var(--lavender) !important;
+    color: #fff !important;
+    border-color: var(--lavender) !important;
+    border-style: solid !important;
+    box-shadow: 2px 2px 0px var(--doodle-color);
+    transform: translateY(-1px);
 }
 
 /* Messages */
@@ -364,42 +1058,51 @@ progress.progress-red::-moz-progress-bar {
 .message-bubble {
     max-width: 80%;
     padding: 0.75rem 1rem;
-    border-radius: 12px;
+    border-radius: 18px;
     line-height: 1.5;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
 .chat-message.user .message-bubble {
-    background: var(--primary);
-    color: var(--primary-inverse);
+    background: linear-gradient(135deg, var(--lavender), var(--lavender-dark));
+    color: #fff;
     border-bottom-right-radius: 4px;
+    border: 2px solid var(--lavender-dark);
+    box-shadow: 3px 3px 0px var(--doodle-color);
+    font-family: 'Nunito', sans-serif;
 }
 
 .chat-message.assistant .message-bubble {
-    background: var(--card-sectionning-background-color);
+    background: rgba(179, 157, 219, 0.08);
     color: var(--color);
+    border: 2px dashed var(--card-border);
     border-bottom-left-radius: 4px;
+}
+
+[data-theme="dark"] .chat-message.assistant .message-bubble {
+    background: rgba(206, 147, 216, 0.1);
 }
 
 .chat-message.system .message-bubble {
     background: transparent;
-    color: var(--muted-color);
+    color: var(--text-muted);
     font-size: 0.85rem;
     font-style: italic;
 }
 
 .chat-message.error .message-bubble {
-    background: rgba(231, 76, 60, 0.1);
-    border: 1px solid var(--del-color);
-    border-radius: 8px;
+    background: rgba(239, 154, 154, 0.15);
+    border: 2px dashed var(--rose);
+    border-radius: 14px;
 }
 
 .message-time {
     font-size: 0.7rem;
-    color: var(--muted-color);
+    color: var(--text-muted);
     margin-top: 0.2rem;
     padding: 0 0.25rem;
+    font-family: 'Patrick Hand', cursive;
 }
 
 /* Markdown in assistant messages */
@@ -408,6 +1111,7 @@ progress.progress-red::-moz-progress-bar {
 .chat-message.assistant .message-bubble h4 {
     margin: 0.5rem 0 0.25rem;
     font-size: 1rem;
+    font-family: 'Patrick Hand', cursive !important;
 }
 
 .chat-message.assistant .message-bubble h3 { font-size: 0.95rem; }
@@ -424,26 +1128,27 @@ progress.progress-red::-moz-progress-bar {
 }
 
 .chat-message.assistant .message-bubble code {
-    background: rgba(0,0,0,0.1);
+    background: rgba(179, 157, 219, 0.15);
     padding: 0.1rem 0.3rem;
-    border-radius: 3px;
+    border-radius: 6px;
     font-size: 0.85em;
 }
 
 [data-theme="dark"] .chat-message.assistant .message-bubble code {
-    background: rgba(255,255,255,0.1);
+    background: rgba(206, 147, 216, 0.15);
 }
 
 .chat-message.assistant .message-bubble pre {
-    background: rgba(0,0,0,0.08);
+    background: rgba(179, 157, 219, 0.08);
     padding: 0.5rem;
-    border-radius: 6px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--card-border);
     overflow-x: auto;
     margin: 0.5rem 0;
 }
 
 [data-theme="dark"] .chat-message.assistant .message-bubble pre {
-    background: rgba(255,255,255,0.08);
+    background: rgba(206, 147, 216, 0.08);
 }
 
 .chat-message.assistant .message-bubble pre code {
@@ -457,7 +1162,7 @@ progress.progress-red::-moz-progress-bar {
 
 .chat-message.assistant .message-bubble hr {
     border: none;
-    border-top: 1px solid var(--muted-border-color);
+    border-top: 2px dashed var(--card-border);
     margin: 0.5rem 0;
 }
 
@@ -470,10 +1175,11 @@ progress.progress-red::-moz-progress-bar {
 }
 
 .typing-indicator .dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: var(--muted-color);
+    background: var(--lavender);
+    border: 1.5px solid var(--lavender-dark);
     animation: typingBounce 1.4s infinite ease-in-out;
 }
 
@@ -482,20 +1188,21 @@ progress.progress-red::-moz-progress-bar {
 .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
 
 .typing-text {
-    font-size: 0.8rem;
-    color: var(--muted-color);
+    font-size: 0.85rem;
+    color: var(--text-muted);
     margin-left: 0.5rem;
     font-style: italic;
+    font-family: 'Patrick Hand', cursive;
 }
 
 @keyframes typingBounce {
     0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-    40% { transform: scale(1); opacity: 1; }
+    40% { transform: scale(1.1); opacity: 1; }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(8px) rotate(-1deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0deg); }
 }
 
 /* Input area */
@@ -521,9 +1228,14 @@ progress.progress-red::-moz-progress-bar {
     height: 44px;
     max-height: 150px;
     margin-bottom: 0 !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     padding: 0.5rem 1rem !important;
     font-size: 0.95rem;
+    border: 2.5px dashed var(--card-border) !important;
+}
+
+.chat-input-row textarea:focus {
+    border-style: solid !important;
 }
 
 /* Override Pico's button width:100% and padding inside forms */
@@ -541,6 +1253,12 @@ progress.progress-red::-moz-progress-bar {
     border-radius: 50% !important;
     flex-shrink: 0;
     line-height: 1;
+    border: 2.5px solid var(--lavender-dark) !important;
+    box-shadow: 2px 2px 0px var(--doodle-color);
+}
+
+.send-btn:hover {
+    transform: rotate(15deg) !important;
 }
 
 .send-btn:disabled {
@@ -551,11 +1269,13 @@ progress.progress-red::-moz-progress-bar {
 .input-hint {
     display: block;
     text-align: right;
-    color: var(--muted-color);
+    color: var(--text-muted);
     margin-top: 0.25rem;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 0.9rem;
 }
 
-/* Responsive */
+/* Responsive - Chat */
 @media (max-width: 768px) {
     .chat-container {
         height: calc(100vh - 140px);
@@ -573,5 +1293,67 @@ progress.progress-red::-moz-progress-bar {
     .chip {
         width: 100%;
         max-width: 300px;
+    }
+}
+
+/* ===== Cute decorative elements ===== */
+
+/* Subtle star/sparkle decorations on page headings */
+h2 {
+    position: relative;
+}
+
+/* Little heart on the footer */
+footer p small {
+    position: relative;
+}
+
+/* Dashed section dividers instead of solid */
+hr {
+    border-top: 2px dashed var(--card-border) !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Select dropdown — match sketch style */
+select {
+    font-family: 'Nunito', sans-serif !important;
+}
+
+/* Scrollbar styling for the chat */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: rgba(179, 157, 219, 0.05);
+    border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--lavender-light);
+    border-radius: 10px;
+    border: 2px solid transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--lavender);
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .brand-penguin,
+    .brand-penguin::after,
+    .brand-penguin::before,
+    .brand-penguin-wrap::before,
+    .brand-penguin-wrap::after {
+        animation: none !important;
+    }
+    .welcome-icon {
+        animation: none !important;
+    }
+    article:first-child::before {
+        animation: none !important;
     }
 }
