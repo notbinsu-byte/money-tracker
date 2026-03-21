@@ -5,13 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.currency import CurrencyRate
 from app.config import settings
 
-SUPPORTED_CURRENCIES = [
-    "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY",
-    "SEK", "NZD", "MXN", "SGD", "HKD", "NOK", "KRW", "TRY",
-    "INR", "RUB", "BRL", "ZAR", "PLN", "THB", "IDR", "HUF",
-    "CZK", "ILS", "CLP", "PHP", "AED", "COP", "SAR", "MYR",
-    "RON", "BGN", "HRK", "ISK", "DKK",
-]
+SUPPORTED_CURRENCIES = ["USD", "PHP"]
 
 async def fetch_rates(base: str = None) -> dict[str, Decimal]:
     """Fetch latest rates from frankfurter.app."""

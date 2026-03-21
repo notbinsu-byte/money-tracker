@@ -16,7 +16,8 @@ A personal expense and income tracking web application built with Python and Fas
 - **CSV Import/Export** -- Bulk import via drag-and-drop, export to CSV
 - **Multi-Currency** -- Per-currency tracking with support for 35+ currencies and live exchange rates
 - **AI Financial Assistant** -- Chat with an AI analyst powered by Claude to query your data, analyze spending, and get insights
-- **Dark/Light Mode** -- Toggle between themes
+- **Cutesy Lavender Aesthetic** -- Soft pastel color scheme with rounded cards, Nunito + Patrick Hand fonts, and an animated pixel-art penguin mascot
+- **Dark/Light Mode** -- Toggle between themes (lavender palette adapts to both)
 - **Responsive** -- Works on desktop, tablet, and mobile
 
 ## Tech Stack
@@ -27,7 +28,8 @@ A personal expense and income tracking web application built with Python and Fas
 | Database | SQLite + SQLAlchemy ORM |
 | Migrations | Alembic |
 | Frontend | Jinja2, Vanilla JS, Chart.js |
-| CSS | Pico CSS |
+| CSS | Pico CSS + custom lavender theme |
+| Fonts | Nunito (body), Patrick Hand (headings/nav) |
 | AI | Anthropic Claude API (claude-opus-4-6) |
 | Currency Rates | frankfurter.app (free, no API key) |
 
@@ -153,7 +155,10 @@ money-tracker/
 │   ├── routers/              # API route handlers
 │   ├── services/             # Business logic
 │   ├── templates/            # Jinja2 HTML templates
-│   └── static/               # CSS & JavaScript
+│   └── static/               # CSS, JavaScript & images
+│       ├── css/style.css     # Custom lavender theme overrides
+│       ├── js/               # app.js, charts.js, utils.js
+│       └── img/              # Penguin sprite sheet (SVG)
 ├── alembic/                  # Database migrations
 ├── seed_data.py              # Default category seeder
 ├── run.py                    # Uvicorn launcher
