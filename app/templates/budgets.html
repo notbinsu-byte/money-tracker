@@ -3,8 +3,8 @@
 {% block title %}Budgets - Money Tracker{% endblock %}
 
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
-    <h2>Budgets</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+    <h2 style="margin:0;">Budgets</h2>
     <button onclick="openAddBudget()">+ Set Budget</button>
 </div>
 
@@ -94,15 +94,16 @@ async function loadBudgets() {
         div.innerHTML = summaries.map(b => {
             const pct = Math.min(parseFloat(b.percentage) || 0, 100);
             const progressClass = pct >= 100 ? 'progress-red' : pct >= 80 ? 'progress-yellow' : 'progress-green';
-            const badgeBg = pct >= 100 ? '#e74c3c' : pct >= 80 ? '#f39c12' : '#2ecc71';
-            const badgeText = pct >= 80 && pct < 100 ? '#000' : '#fff';
+            const badgeBg = pct >= 100 ? 'rgba(239,154,154,0.2)' : pct >= 80 ? 'rgba(255,224,178,0.3)' : 'rgba(165,214,167,0.2)';
+            const badgeColor = pct >= 100 ? 'var(--rose-dark)' : pct >= 80 ? '#e65100' : 'var(--sage-dark)';
+            const badgeBorder = pct >= 100 ? 'rgba(239,154,154,0.4)' : pct >= 80 ? 'rgba(255,183,77,0.4)' : 'rgba(165,214,167,0.4)';
             const status = b.percentage >= 100 ? 'Over budget!' : b.percentage >= 80 ? 'Near limit' : 'On track';
             return `<article>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} (${escapeHtml(b.currency)})</h4>
-                    <div>
-                        <span class="badge" style="background:${badgeBg};color:${badgeText};padding:2px 8px;border-radius:4px;font-size:0.8rem;">${status}</span>
-                        <button class="outline small-btn" onclick="deleteBudget(${b.budget_id})" style="margin-left:0.5rem;">Delete</button>
+                    <h4 style="margin:0;">${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.6;">(${escapeHtml(b.currency)})</small></h4>
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                        <span style="background:${badgeBg};color:${badgeColor};border:1px solid ${badgeBorder};padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;">${status}</span>
+                        <button class="outline small-btn" onclick="deleteBudget(${b.budget_id})">Delete</button>
                     </div>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin:0.5rem 0;">

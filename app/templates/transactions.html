@@ -3,8 +3,8 @@
 {% block title %}Transactions - Money Tracker{% endblock %}
 
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
-    <h2>Transactions</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+    <h2 style="margin:0;">Transactions</h2>
     <button onclick="openAddModal()">+ Add Transaction</button>
 </div>
 
@@ -204,7 +204,7 @@ async function loadTransactions() {
                 <td>${formatDate(t.date)}</td>
                 <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${escapeHtml(t.category_color || '#6c757d')};margin-right:6px;"></span>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '')}</td>
                 <td>${escapeHtml(t.description)}</td>
-                <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
+                <td style="text-align:right;font-weight:600;color:${t.type === 'income' ? 'var(--sage-dark)' : 'var(--rose-dark)'}">
                     ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, t.currency || 'USD')}
                 </td>
                 <td>

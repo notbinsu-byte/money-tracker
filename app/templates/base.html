@@ -7,41 +7,60 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     {% block head %}{% endblock %}
 </head>
 <body>
-    <nav class="container-fluid">
+    <!-- Floating background decorations -->
+    <div class="bg-decoration bg-blob-1" aria-hidden="true"></div>
+    <div class="bg-decoration bg-blob-2" aria-hidden="true"></div>
+    <div class="bg-decoration bg-blob-3" aria-hidden="true"></div>
+
+    <nav class="container-fluid main-nav">
         <ul>
-            <li><a href="/" class="nav-brand"><span class="brand-penguin-wrap"><span class="brand-penguin" aria-hidden="true">🐧</span></span><strong>Money Tracker</strong></a></li>
-        </ul>
-        <ul>
-            <li><a href="/" class="{% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a></li>
-            <li><a href="/transactions" class="{% if active_page == 'transactions' %}active{% endif %}">Transactions</a></li>
-            <li><a href="/categories" class="{% if active_page == 'categories' %}active{% endif %}">Categories</a></li>
-            <li><a href="/budgets" class="{% if active_page == 'budgets' %}active{% endif %}">Budgets</a></li>
-            <li><a href="/recurring" class="{% if active_page == 'recurring' %}active{% endif %}">Recurring</a></li>
-            <li><a href="/savings-goals" class="{% if active_page == 'savings' %}active{% endif %}">Savings</a></li>
-            <li><a href="/reports" class="{% if active_page == 'reports' %}active{% endif %}">Reports</a></li>
-            <li><a href="/import-export" class="{% if active_page == 'import-export' %}active{% endif %}">Import/Export</a></li>
-            <li><a href="/ai-chat" class="{% if active_page == 'ai-chat' %}active{% endif %}">AI Chat</a></li>
             <li>
-                <button id="theme-toggle" class="outline" onclick="toggleTheme()" title="Toggle theme">
+                <a href="/" class="nav-brand">
+                    <span class="brand-penguin-wrap">
+                        <span class="brand-penguin" aria-hidden="true">🐧</span>
+                    </span>
+                    <strong>Money Tracker</strong>
+                </a>
+            </li>
+        </ul>
+        <ul class="nav-links" id="nav-links">
+            <li><a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard</span></a></li>
+            <li><a href="/transactions" class="nav-link {% if active_page == 'transactions' %}active{% endif %}"><span class="nav-icon">💳</span><span class="nav-text">Transactions</span></a></li>
+            <li><a href="/categories" class="nav-link {% if active_page == 'categories' %}active{% endif %}"><span class="nav-icon">🏷️</span><span class="nav-text">Categories</span></a></li>
+            <li><a href="/budgets" class="nav-link {% if active_page == 'budgets' %}active{% endif %}"><span class="nav-icon">📊</span><span class="nav-text">Budgets</span></a></li>
+            <li><a href="/recurring" class="nav-link {% if active_page == 'recurring' %}active{% endif %}"><span class="nav-icon">🔄</span><span class="nav-text">Recurring</span></a></li>
+            <li><a href="/savings-goals" class="nav-link {% if active_page == 'savings' %}active{% endif %}"><span class="nav-icon">🎯</span><span class="nav-text">Savings</span></a></li>
+            <li><a href="/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}"><span class="nav-icon">📈</span><span class="nav-text">Reports</span></a></li>
+            <li><a href="/import-export" class="nav-link {% if active_page == 'import-export' %}active{% endif %}"><span class="nav-icon">📥</span><span class="nav-text">Import/Export</span></a></li>
+            <li><a href="/ai-chat" class="nav-link {% if active_page == 'ai-chat' %}active{% endif %}"><span class="nav-icon">✨</span><span class="nav-text">AI Chat</span></a></li>
+            <li>
+                <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
                     <span id="theme-icon">🌙</span>
                 </button>
             </li>
         </ul>
+        <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
     </nav>
 
     <div id="notification" class="notification" style="display:none;"></div>
-    <main class="container">
+
+    <main class="container page-content">
         {% block content %}{% endblock %}
     </main>
 
     <footer class="container">
-        <hr>
-        <p><small>Money Tracker &copy; 2025 &#10022; made with love &#10084;</small></p>
+        <div class="footer-inner">
+            <p><small>Money Tracker &copy; 2025 &#10022; made with love &#10084;</small></p>
+        </div>
     </footer>
 
     <script src="/static/js/utils.js"></script>

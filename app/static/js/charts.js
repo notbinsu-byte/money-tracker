@@ -1,9 +1,9 @@
-// Chart.js rendering functions — Soft Pastel Style
+// Chart.js rendering functions — Soft Pastel Style v3
 
 const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // Shared font config for all charts
-const chartFont = { family: "'Patrick Hand', cursive", size: 13 };
+const chartFont = { family: "'Nunito', sans-serif", size: 12, weight: 600 };
 
 function getChartColors(count) {
     const palette = [

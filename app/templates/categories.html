@@ -3,8 +3,8 @@
 {% block title %}Categories - Money Tracker{% endblock %}
 
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
-    <h2>Categories</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+    <h2 style="margin:0;">Categories</h2>
     <button onclick="openAddCategory()">+ Add Category</button>
 </div>
 
@@ -82,8 +82,11 @@ async function loadAllCategories() {
         const render = (list) => list.length === 0
             ? '<p style="text-align:center;color:var(--muted-color);">No categories</p>'
             : list.map(c => `
-                <div class="category-item" style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-left:3px solid ${escapeHtml(c.color)};margin-bottom:0.5rem;">
-                    <span>${escapeHtml(c.icon)} ${escapeHtml(c.name)} ${c.is_default ? '<small>(default)</small>' : ''}</span>
+                <div class="category-item" style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;border-radius:10px;margin-bottom:0.4rem;transition:background 0.15s ease;">
+                    <span style="display:flex;align-items:center;gap:0.5rem;">
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${escapeHtml(c.color)};flex-shrink:0;"></span>
+                        ${escapeHtml(c.icon)} ${escapeHtml(c.name)} ${c.is_default ? '<small style="color:var(--text-muted);">(default)</small>' : ''}
+                    </span>
                     <div style="display:flex;gap:0.25rem;">
                         <button class="outline small-btn" onclick="editCategory(${c.id})">Edit</button>
                         <button class="outline secondary small-btn" onclick="deleteCategory(${c.id})">Del</button>

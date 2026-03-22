@@ -9,7 +9,7 @@
 </hgroup>
 
 <div id="summary-cards">
-    <p style="text-align:center; color:var(--muted-color);">Loading summary...</p>
+    <p style="text-align:center; color:var(--text-muted);">Loading summary...</p>
 </div>
 
 <div class="grid">
@@ -19,7 +19,7 @@
             <select id="pie-currency-select" style="width:auto;margin:0;padding:2px 8px;font-size:0.85rem;"></select>
         </header>
         <canvas id="category-pie-chart" style="max-height:300px;"></canvas>
-        <p id="no-expense-data" style="display:none; text-align:center; color:var(--muted-color);">No expense data for this period</p>
+        <p id="no-expense-data" style="display:none; text-align:center; color:var(--text-muted);">No expense data for this period</p>
     </article>
     <article>
         <header style="display:flex;justify-content:space-between;align-items:center;">
@@ -34,13 +34,13 @@
     <article>
         <header>Budget Alerts</header>
         <div id="budget-alerts">
-            <p style="text-align:center; color:var(--muted-color);">No budgets set</p>
+            <p style="text-align:center; color:var(--text-muted);">No budgets set</p>
         </div>
     </article>
     <article>
         <header>Recent Transactions</header>
         <div id="recent-transactions">
-            <p style="text-align:center; color:var(--muted-color);">No transactions yet</p>
+            <p style="text-align:center; color:var(--text-muted);">No transactions yet</p>
         </div>
     </article>
 </div>
@@ -48,7 +48,7 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<script src="/static/js/charts.js?v=2"></script>
+<script src="/static/js/charts.js?v=3"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     let dashboardCharts = {};
@@ -58,16 +58,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
     document.getElementById('dashboard-period').textContent = `${monthNames[month]} ${year}`;
 
-    // Shared state for selectors
     let summaryData = null;
     let trendData = null;
 
-    // --- Helper: render summary cards per currency ---
     function renderSummaryCards(totals) {
         const container = document.getElementById('summary-cards');
         const currencies = Object.keys(totals);
         if (currencies.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--muted-color);">No data for this period</p>';
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No data for this period</p>';
             return;
         }
         container.innerHTML = currencies.map(cur => {
@@ -75,25 +73,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const income = parseFloat(t.income) || 0;
             const expense = parseFloat(t.expense) || 0;
             const net = parseFloat(t.net) || 0;
-            const netColor = net >= 0 ? 'var(--ins-color)' : 'var(--del-color)';
+            const netColor = net >= 0 ? 'var(--sage-dark)' : 'var(--rose-dark)';
+            const netIcon = net >= 0 ? '&#x2197;' : '&#x2198;';
             return `<div class="grid">
                 <article>
-                    <header>Income (${escapeHtml(cur)})</header>
-                    <h3>${formatCurrency(income, cur)}</h3>
+                    <header><span style="opacity:0.8;">&#x1f4c8;</span> Income (${escapeHtml(cur)})</header>
+                    <h3 style="color:var(--sage-dark);margin:0.5rem 0 0;">${formatCurrency(income, cur)}</h3>
                 </article>
                 <article>
-                    <header>Expenses (${escapeHtml(cur)})</header>
-                    <h3>${formatCurrency(expense, cur)}</h3>
+                    <header><span style="opacity:0.8;">&#x1f4c9;</span> Expenses (${escapeHtml(cur)})</header>
+                    <h3 style="color:var(--rose-dark);margin:0.5rem 0 0;">${formatCurrency(expense, cur)}</h3>
                 </article>
                 <article>
-                    <header>Net (${escapeHtml(cur)})</header>
-                    <h3 style="color:${netColor}">${formatCurrency(net, cur)}</h3>
+                    <header><span style="opacity:0.8;">${netIcon}</span> Net (${escapeHtml(cur)})</header>
+                    <h3 style="color:${netColor};margin:0.5rem 0 0;">${formatCurrency(net, cur)}</h3>
                 </article>
             </div>`;
         }).join('');
     }
 
-    // --- Helper: render pie chart for a specific currency ---
     function renderPieForCurrency(currency) {
         if (!summaryData) return;
         const filtered = (summaryData.expense_breakdown || []).filter(d => d.currency === currency);
@@ -113,7 +111,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Helper: render trend chart for a specific currency ---
     function renderTrendForCurrency(currency) {
         if (!trendData) return;
         const mapped = trendData.map(d => {
@@ -132,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         dashboardCharts.trend = renderTrendChart('trend-chart', mapped, currency);
     }
 
-    // --- Helper: populate a select element with currency options ---
     function populateCurrencySelect(selectId, currencies, defaultCur) {
         const sel = document.getElementById(selectId);
         sel.innerHTML = currencies.map(c =>
@@ -145,15 +141,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
         summaryData = summary;
-
-        // Render summary cards
         renderSummaryCards(summary.totals);
-
-        // Determine available currencies from totals
         const currencies = Object.keys(summary.totals);
         const defaultCurrency = currencies.includes('USD') ? 'USD' : (currencies[0] || 'USD');
-
-        // Pie chart currency selector
         if (currencies.length > 0) {
             const pieSelect = populateCurrencySelect('pie-currency-select', currencies, defaultCurrency);
             pieSelect.addEventListener('change', () => renderPieForCurrency(pieSelect.value));
@@ -169,8 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const trend = await api.get('/api/v1/reports/trend?months=6');
         trendData = trend;
-
-        // Collect all currencies appearing in trend data
         const trendCurrencies = new Set();
         trend.forEach(d => {
             if (d.currencies) {
@@ -179,7 +167,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const trendCurrArr = Array.from(trendCurrencies).sort();
         const defaultTrendCur = trendCurrArr.includes('USD') ? 'USD' : (trendCurrArr[0] || 'USD');
-
         if (trendCurrArr.length > 0) {
             const trendSelect = populateCurrencySelect('trend-currency-select', trendCurrArr, defaultTrendCur);
             trendSelect.addEventListener('change', () => renderTrendForCurrency(trendSelect.value));
@@ -200,8 +187,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const cur = b.currency || 'USD';
                 return `<div class="budget-alert">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.7;">(${escapeHtml(cur)})</small></span>
-                        <span>${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
+                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.6;">(${escapeHtml(cur)})</small></span>
+                        <span style="font-weight:600;">${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
                     </div>
                     <progress class="${progressClass}" value="${pct}" max="100"></progress>
                 </div>`;
@@ -219,10 +206,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return `
                 <tr>
                     <td>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.description)}</td>
-                    <td style="text-align:right;color:${t.type === 'income' ? 'var(--ins-color)' : 'var(--del-color)'}">
+                    <td style="text-align:right;font-weight:600;color:${t.type === 'income' ? 'var(--sage-dark)' : 'var(--rose-dark)'}">
                         ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, cur)}
                     </td>
-                    <td>${formatDate(t.date)}</td>
+                    <td style="color:var(--text-muted);font-size:0.85rem;">${formatDate(t.date)}</td>
                 </tr>`;
             }).join('') + '</tbody></table>';
         }
