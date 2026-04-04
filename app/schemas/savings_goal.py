@@ -21,6 +21,7 @@ class SavingsGoalCreate(SavingsGoalBase):
 class SavingsGoalUpdate(BaseModel):
     name: Union[str, None] = Field(None, min_length=1, max_length=100)
     target_amount: Union[Decimal, None] = Field(None, gt=0)
+    current_amount: Union[Decimal, None] = Field(None, ge=0)
     currency: Union[str, None] = Field(None, pattern="^[A-Z]{3}$")
     deadline: Union[str, None] = None  # str due to Pydantic v2 date bug
     icon: Union[str, None] = Field(None, max_length=50)

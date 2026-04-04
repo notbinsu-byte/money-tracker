@@ -81,6 +81,11 @@ def update_goal(goal_id: int, data: SavingsGoalUpdate, db: Session = Depends(get
             update_data["deadline"] = None
     for key, value in update_data.items():
         setattr(g, key, value)
+    # Recalculate completion status when amounts change
+    if "current_amount" in update_data or "target_amount" in update_data:
+        g.is_completed = g.current_amount >= g.target_amount
+        if g.is_completed:
+            g.current_amount = g.target_amount
     db.commit()
     db.refresh(g)
     return _to_response(g)

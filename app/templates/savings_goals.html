@@ -41,6 +41,10 @@
                            style="text-transform:uppercase;" placeholder="USD">
                 </label>
             </div>
+            <label id="goal-current-wrap" style="display:none;">
+                Current Amount (saved so far)
+                <input type="number" id="goal-current" step="0.01" min="0">
+            </label>
             <div class="grid">
                 <label>
                     Icon
@@ -161,6 +165,7 @@ function openAddGoal() {
     document.getElementById('goal-color').value = '#2ecc71';
     document.getElementById('goal-deadline').value = '';
     document.getElementById('goal-notes').value = '';
+    document.getElementById('goal-current-wrap').style.display = 'none';
     document.getElementById('goal-modal').showModal();
 }
 
@@ -176,6 +181,8 @@ async function openEditGoal(id) {
         document.getElementById('goal-color').value = g.color;
         document.getElementById('goal-deadline').value = g.deadline || '';
         document.getElementById('goal-notes').value = g.notes || '';
+        document.getElementById('goal-current').value = parseFloat(g.current_amount);
+        document.getElementById('goal-current-wrap').style.display = '';
         document.getElementById('goal-modal').showModal();
     } catch(err) {
         notify(err.message || 'Failed to load goal', 'error');
@@ -194,6 +201,10 @@ async function saveGoal(e) {
         deadline: document.getElementById('goal-deadline').value || null,
         notes: document.getElementById('goal-notes').value.trim() || null,
     };
+    if (id) {
+        const curVal = document.getElementById('goal-current').value;
+        data.current_amount = curVal !== '' ? parseFloat(curVal) : 0;
+    }
     try {
         if (id) {
             await api.put(`/api/v1/savings-goals/${id}`, data);
