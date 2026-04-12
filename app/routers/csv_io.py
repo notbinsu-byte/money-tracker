@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
 import io
 from app.database import get_db
@@ -41,7 +41,10 @@ async def csv_import(file: UploadFile = File(...), db: Session = Depends(get_db)
 
     rows, errors = parse_csv(text)
     if errors:
-        return {"success": False, "errors": errors, "valid_rows": len(rows)}
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "errors": errors, "valid_rows": len(rows)},
+        )
 
     count = import_transactions(db, rows)
     return {"success": True, "imported": count}

@@ -205,7 +205,7 @@ def execute_tool(tool_name: str, tool_input: dict, db: Session):
         return _serialize(result)
 
     elif tool_name == "search_transactions":
-        query = db.query(Transaction).join(Category, Transaction.category_id == Category.id)
+        query = db.query(Transaction).outerjoin(Category, Transaction.category_id == Category.id)
         if tool_input.get("search"):
             query = query.filter(Transaction.description.ilike(f"%{tool_input['search']}%"))
         if tool_input.get("type"):

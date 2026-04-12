@@ -6,7 +6,7 @@ from decimal import Decimal
 class RecurringBase(BaseModel):
     type: str = Field(..., pattern="^(expense|income)$")
     amount: Decimal = Field(..., gt=0)
-    currency: str = Field(default="USD", max_length=3)
+    currency: str = Field(default="USD", max_length=3, pattern="^[A-Z]{3}$")
     description: str = Field(..., max_length=500)
     category_id: int
     frequency: str = Field(..., pattern="^(daily|weekly|monthly|yearly)$")
@@ -19,7 +19,7 @@ class RecurringCreate(RecurringBase):
 class RecurringUpdate(BaseModel):
     type: Union[str, None] = Field(None, pattern="^(expense|income)$")
     amount: Union[Decimal, None] = Field(None, gt=0)
-    currency: Union[str, None] = Field(None, max_length=3)
+    currency: Union[str, None] = Field(None, max_length=3, pattern="^[A-Z]{3}$")
     description: Union[str, None] = Field(None, max_length=500)
     category_id: Union[int, None] = None
     frequency: Union[str, None] = Field(None, pattern="^(daily|weekly|monthly|yearly)$")

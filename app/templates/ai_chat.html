@@ -238,7 +238,10 @@ function renderMarkdown(text) {
     // Wrap consecutive li in ul
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
     // Ordered lists
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
+    // Wrap consecutive oli in ol, then convert oli to li
+    html = html.replace(/((?:<oli>.*<\/oli>\n?)+)/g, '<ol>$1</ol>');
+    html = html.replace(/<\/?oli>/g, function(m) { return m.replace('oli', 'li'); });
     // Horizontal rules
     html = html.replace(/^---$/gm, '<hr>');
     // Line breaks (but not inside pre blocks)

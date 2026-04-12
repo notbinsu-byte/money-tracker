@@ -1,8 +1,11 @@
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from app.models.recurring import RecurringTransaction
 from app.models.transaction import Transaction
+from app.services.currency_service import get_cached_rate
+from app.config import settings
 
 def generate_recurring_transactions(db: Session) -> int:
     """Generate pending recurring transactions up to today."""
@@ -22,11 +25,18 @@ def generate_recurring_transactions(db: Session) -> int:
         while next_date <= today:
             if rule.end_date and next_date > rule.end_date:
                 break
+            currency = rule.currency or "USD"
+            base = settings.BASE_CURRENCY
+            if currency != base:
+                rate = get_cached_rate(db, base, currency)
+                amount_in_base = round(rule.amount / rate, 2) if rate else rule.amount
+            else:
+                amount_in_base = rule.amount
             t = Transaction(
                 type=rule.type,
                 amount=rule.amount,
-                currency=rule.currency,
-                amount_in_base=rule.amount,
+                currency=currency,
+                amount_in_base=amount_in_base,
                 description=rule.description,
                 date=next_date,
                 category_id=rule.category_id,

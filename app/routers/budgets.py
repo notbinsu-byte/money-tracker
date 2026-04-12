@@ -40,10 +40,11 @@ def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
     cat = db.query(Category).filter(Category.id == data.category_id).first()
     if not cat:
         raise HTTPException(400, "Category not found")
+    month_filter = Budget.month.is_(None) if data.month is None else Budget.month == data.month
     existing = db.query(Budget).filter(
         Budget.category_id == data.category_id,
         Budget.year == data.year,
-        Budget.month == data.month,
+        month_filter,
         Budget.currency == data.currency,
     ).first()
     if existing:

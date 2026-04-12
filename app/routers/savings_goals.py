@@ -79,6 +79,16 @@ def update_goal(goal_id: int, data: SavingsGoalUpdate, db: Session = Depends(get
             update_data["deadline"] = date_cls.fromisoformat(val)
         else:
             update_data["deadline"] = None
+    # Prevent silent data loss when lowering target below current contributions
+    if "target_amount" in update_data:
+        new_target = update_data["target_amount"]
+        current = update_data.get("current_amount", g.current_amount or 0)
+        if new_target is not None and current > new_target:
+            raise HTTPException(
+                400,
+                f"Cannot set target below current contributions ({current}). "
+                "Reduce current amount first or set a higher target.",
+            )
     for key, value in update_data.items():
         setattr(g, key, value)
     # Recalculate completion status when amounts change

@@ -5,12 +5,18 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy.orm import Session
 from app.models.transaction import Transaction
 from app.models.category import Category
+from app.services.currency_service import get_cached_rate
+from app.config import settings
 
 EXPORT_FIELDS = ["date", "type", "amount", "currency", "description", "category", "notes"]
 
 def _sanitize_csv_field(value: str) -> str:
     """Prevent CSV injection by escaping formula-triggering characters."""
-    if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
+    if not value:
+        return value
+    # Strip embedded newlines that could inject new rows with formula triggers
+    value = value.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    if value[0] in ("=", "+", "-", "@", "\t", "|"):
         return "'" + value
     return value
 
@@ -103,11 +109,19 @@ def import_transactions(db: Session, rows: list[dict]) -> int:
         if not category:
             raise ValueError("No categories exist in database. Please seed categories first.")
 
+        amount = Decimal(row["amount"].strip())
+        currency = row.get("currency", "USD").strip() or "USD"
+        base = settings.BASE_CURRENCY
+        if currency != base:
+            rate = get_cached_rate(db, base, currency)
+            amount_in_base = round(amount / rate, 2) if rate else amount
+        else:
+            amount_in_base = amount
         t = Transaction(
             type=row["type"].strip(),
-            amount=Decimal(row["amount"].strip()),
-            currency=row.get("currency", "USD").strip() or "USD",
-            amount_in_base=Decimal(row["amount"].strip()),
+            amount=amount,
+            currency=currency,
+            amount_in_base=amount_in_base,
             description=row["description"].strip(),
             date=datetime.strptime(row["date"].strip(), "%Y-%m-%d").date(),
             category_id=category.id if category else None,

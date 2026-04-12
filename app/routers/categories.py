@@ -52,7 +52,13 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
     if not cat:
         raise HTTPException(404, "Category not found")
     from app.models.transaction import Transaction
+    from app.models.budget import Budget
+    from app.models.recurring import RecurringTransaction
     if db.query(Transaction).filter(Transaction.category_id == category_id).first():
         raise HTTPException(400, "Cannot delete category with existing transactions")
+    if db.query(Budget).filter(Budget.category_id == category_id).first():
+        raise HTTPException(400, "Cannot delete category with existing budgets")
+    if db.query(RecurringTransaction).filter(RecurringTransaction.category_id == category_id).first():
+        raise HTTPException(400, "Cannot delete category with existing recurring transactions")
     db.delete(cat)
     db.commit()
