@@ -3,28 +3,27 @@
 {% block title %}Dashboard - Money Tracker{% endblock %}
 
 {% block content %}
-<hgroup>
-    <h2>Dashboard</h2>
-    <p id="dashboard-period"></p>
-</hgroup>
+<!-- Hero: net savings — replaces the old "Dashboard" hgroup -->
+<section id="hero-net-section">
+    <p style="text-align:center;color:var(--text-3);">Loading…</p>
+</section>
 
-<div id="summary-cards">
-    <p style="text-align:center; color:var(--text-muted);">Loading summary...</p>
-</div>
+<!-- Income / Expenses summary cards (per currency, condensed) -->
+<div id="summary-cards" style="margin-bottom: 1.5rem;"></div>
 
 <div class="grid">
     <article>
         <header style="display:flex;justify-content:space-between;align-items:center;">
             <span>Expense Breakdown</span>
-            <select id="pie-currency-select" style="width:auto;margin:0;padding:2px 8px;font-size:0.85rem;"></select>
+            <select id="pie-currency-select" style="width:auto;margin:0;height:28px;padding:0 8px;font-size:12px;"></select>
         </header>
         <canvas id="category-pie-chart" style="max-height:300px;"></canvas>
-        <p id="no-expense-data" style="display:none; text-align:center; color:var(--text-muted);">No expense data for this period</p>
+        <p id="no-expense-data" style="display:none; text-align:center; color:var(--text-3);">No expense data for this period</p>
     </article>
     <article>
         <header style="display:flex;justify-content:space-between;align-items:center;">
             <span>Monthly Trend</span>
-            <select id="trend-currency-select" style="width:auto;margin:0;padding:2px 8px;font-size:0.85rem;"></select>
+            <select id="trend-currency-select" style="width:auto;margin:0;height:28px;padding:0 8px;font-size:12px;"></select>
         </header>
         <canvas id="trend-chart" style="max-height:300px;"></canvas>
     </article>
@@ -34,13 +33,13 @@
     <article>
         <header>Budget Alerts</header>
         <div id="budget-alerts">
-            <p style="text-align:center; color:var(--text-muted);">No budgets set</p>
+            <p style="text-align:center; color:var(--text-3);">No budgets set</p>
         </div>
     </article>
     <article>
         <header>Recent Transactions</header>
         <div id="recent-transactions">
-            <p style="text-align:center; color:var(--text-muted);">No transactions yet</p>
+            <p style="text-align:center; color:var(--text-3);">No transactions yet</p>
         </div>
     </article>
 </div>
@@ -56,40 +55,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
-    document.getElementById('dashboard-period').textContent = `${monthNames[month]} ${year}`;
+    const periodLabel = `${monthNames[month]} ${year}`;
 
     let summaryData = null;
     let trendData = null;
 
+    function renderHero(totals) {
+        const el = document.getElementById('hero-net-section');
+        const currencies = Object.keys(totals);
+        if (currencies.length === 0) {
+            el.innerHTML = `
+                <div class="hero-net">
+                    <div class="hero-net-label">Net savings · ${periodLabel}</div>
+                    <div class="hero-net-value">$0.00</div>
+                    <div class="hero-net-meta">No transactions yet for this period.</div>
+                </div>`;
+            return;
+        }
+        // Use the first currency (USD if available) for hero
+        const primary = currencies.includes('USD') ? 'USD' : currencies[0];
+        const t = totals[primary];
+        const net = parseFloat(t.net) || 0;
+        const income = parseFloat(t.income) || 0;
+        const expense = parseFloat(t.expense) || 0;
+        const netClass = net >= 0 ? 'pos' : 'neg';
+        const sign = net >= 0 ? '+' : '−';
+        const absNet = Math.abs(net);
+
+        el.innerHTML = `
+            <div class="hero-net">
+                <div class="hero-net-label">Net savings · ${escapeHtml(periodLabel)} · ${escapeHtml(primary)}</div>
+                <div class="hero-net-value ${netClass}">${sign}${formatCurrency(absNet, primary).replace(/^[^\d-]*/, '')}</div>
+                <div class="hero-net-meta">
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pos);margin-right:6px;"></span>+${formatCurrency(income, primary)} income</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--neg);margin-right:6px;"></span>−${formatCurrency(expense, primary)} spent</span>
+                </div>
+            </div>`;
+    }
+
     function renderSummaryCards(totals) {
         const container = document.getElementById('summary-cards');
         const currencies = Object.keys(totals);
-        if (currencies.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No data for this period</p>';
-            return;
-        }
-        container.innerHTML = currencies.map(cur => {
+        if (currencies.length === 0) { container.innerHTML = ''; return; }
+        // Show secondary currencies as compact strip if more than one
+        if (currencies.length === 1) { container.innerHTML = ''; return; }
+        container.innerHTML = `<div class="grid">` + currencies.slice(1).map(cur => {
             const t = totals[cur];
-            const income = parseFloat(t.income) || 0;
-            const expense = parseFloat(t.expense) || 0;
             const net = parseFloat(t.net) || 0;
-            const netColor = net >= 0 ? 'var(--sage-dark)' : 'var(--rose-dark)';
-            const netIcon = net >= 0 ? '&#x2197;' : '&#x2198;';
-            return `<div class="grid">
-                <article>
-                    <header><span style="opacity:0.8;">&#x1f4c8;</span> Income (${escapeHtml(cur)})</header>
-                    <h3 style="color:var(--sage-dark);margin:0.5rem 0 0;">${formatCurrency(income, cur)}</h3>
-                </article>
-                <article>
-                    <header><span style="opacity:0.8;">&#x1f4c9;</span> Expenses (${escapeHtml(cur)})</header>
-                    <h3 style="color:var(--rose-dark);margin:0.5rem 0 0;">${formatCurrency(expense, cur)}</h3>
-                </article>
-                <article>
-                    <header><span style="opacity:0.8;">${netIcon}</span> Net (${escapeHtml(cur)})</header>
-                    <h3 style="color:${netColor};margin:0.5rem 0 0;">${formatCurrency(net, cur)}</h3>
-                </article>
-            </div>`;
-        }).join('');
+            const netColor = net >= 0 ? 'var(--pos)' : 'var(--neg)';
+            return `<article>
+                <header>${escapeHtml(cur)}</header>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                    <span style="color:var(--text-3);font-size:12px;">Net</span>
+                    <strong style="color:${netColor};font-size:18px;font-variant-numeric:tabular-nums;">${formatCurrency(net, cur)}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;color:var(--text-3);font-size:12px;margin-top:6px;">
+                    <span>+${formatCurrency(t.income, cur)}</span>
+                    <span>−${formatCurrency(t.expense, cur)}</span>
+                </div>
+            </article>`;
+        }).join('') + `</div>`;
     }
 
     function renderPieForCurrency(currency) {
@@ -97,10 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const filtered = (summaryData.expense_breakdown || []).filter(d => d.currency === currency);
         const canvas = document.getElementById('category-pie-chart');
         const noData = document.getElementById('no-expense-data');
-        if (dashboardCharts.pie) {
-            dashboardCharts.pie.destroy();
-            dashboardCharts.pie = null;
-        }
+        if (dashboardCharts.pie) { dashboardCharts.pie.destroy(); dashboardCharts.pie = null; }
         if (filtered.length > 0) {
             canvas.style.display = '';
             noData.style.display = 'none';
@@ -122,10 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 expense: parseFloat(cData.expense) || 0,
             };
         });
-        if (dashboardCharts.trend) {
-            dashboardCharts.trend.destroy();
-            dashboardCharts.trend = null;
-        }
+        if (dashboardCharts.trend) { dashboardCharts.trend.destroy(); dashboardCharts.trend = null; }
         dashboardCharts.trend = renderTrendChart('trend-chart', mapped, currency);
     }
 
@@ -141,6 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const summary = await api.get(`/api/v1/reports/monthly-summary?year=${year}&month=${month}`);
         summaryData = summary;
+        renderHero(summary.totals);
         renderSummaryCards(summary.totals);
         const currencies = Object.keys(summary.totals);
         const defaultCurrency = currencies.includes('USD') ? 'USD' : (currencies[0] || 'USD');
@@ -153,18 +173,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('category-pie-chart').style.display = 'none';
             document.getElementById('no-expense-data').style.display = 'block';
         }
-    } catch(e) { console.error('Failed to load summary:', e); }
+    } catch(e) { console.error('Failed to load summary:', e); renderHero({}); }
 
     // Load trend
     try {
         const trend = await api.get('/api/v1/reports/trend?months=6');
         trendData = trend;
         const trendCurrencies = new Set();
-        trend.forEach(d => {
-            if (d.currencies) {
-                Object.keys(d.currencies).forEach(c => trendCurrencies.add(c));
-            }
-        });
+        trend.forEach(d => { if (d.currencies) Object.keys(d.currencies).forEach(c => trendCurrencies.add(c)); });
         const trendCurrArr = Array.from(trendCurrencies).sort();
         const defaultTrendCur = trendCurrArr.includes('USD') ? 'USD' : (trendCurrArr[0] || 'USD');
         if (trendCurrArr.length > 0) {
@@ -185,10 +201,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const pct = Math.min(b.percentage, 100);
                 const progressClass = b.percentage >= 100 ? 'progress-red' : b.percentage >= 80 ? 'progress-yellow' : 'progress-green';
                 const cur = b.currency || 'USD';
-                return `<div class="budget-alert">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="opacity:0.6;">(${escapeHtml(cur)})</small></span>
-                        <span style="font-weight:600;">${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
+                return `<div style="margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span>${escapeHtml(b.category_icon)} ${escapeHtml(b.category_name)} <small style="color:var(--text-3);">(${escapeHtml(cur)})</small></span>
+                        <span style="font-weight:600;font-variant-numeric:tabular-nums;">${formatCurrency(b.spent_amount, cur)} / ${formatCurrency(b.budget_amount, cur)}</span>
                     </div>
                     <progress class="${progressClass}" value="${pct}" max="100"></progress>
                 </div>`;
@@ -201,17 +217,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await api.get('/api/v1/transactions?per_page=5&sort_by=date&sort_order=desc');
         const div = document.getElementById('recent-transactions');
         if (data.items && data.items.length > 0) {
-            div.innerHTML = '<table role="grid"><tbody>' + data.items.map(t => {
+            div.innerHTML = data.items.map(t => {
                 const cur = t.currency || 'USD';
+                const color = t.type === 'income' ? 'var(--pos)' : 'var(--neg)';
                 return `
-                <tr>
-                    <td>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.description)}</td>
-                    <td style="text-align:right;font-weight:600;color:${t.type === 'income' ? 'var(--sage-dark)' : 'var(--rose-dark)'}">
-                        ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount, cur)}
-                    </td>
-                    <td style="color:var(--text-muted);font-size:0.85rem;">${formatDate(t.date)}</td>
-                </tr>`;
-            }).join('') + '</tbody></table>';
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-faint);">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--bg-overlay);font-size:14px;flex-shrink:0;">${escapeHtml(t.category_icon || '•')}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="color:var(--text-1);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.description)}</div>
+                        <div style="color:var(--text-3);font-size:12px;">${escapeHtml(t.category_name || '')} · ${formatDate(t.date)}</div>
+                    </div>
+                    <div style="font-weight:600;color:${color};font-variant-numeric:tabular-nums;">
+                        ${t.type === 'income' ? '+' : '−'}${formatCurrency(t.amount, cur)}
+                    </div>
+                </div>`;
+            }).join('');
         }
     } catch(e) { console.error('Failed to load recent transactions:', e); }
 });

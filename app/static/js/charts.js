@@ -1,54 +1,66 @@
-// Chart.js rendering functions — Soft Pastel Style v3
+// Chart.js rendering functions — Bolder Dark palette
 
 const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-// Shared font config for all charts
-const chartFont = { family: "'Nunito', sans-serif", size: 12, weight: 600 };
+const chartFont = { family: "'Geist', 'Inter', system-ui, sans-serif", size: 12, weight: 500 };
+
+const DARK_PALETTE = ['#a07dff','#f5a9c8','#ffc06b','#6dd3a8','#6cc7e8','#c994e8','#e8b86a','#82d4c4'];
+const GRID_COLOR = 'rgba(255,255,255,0.06)';
+const TEXT_COLOR = '#c9c5d6';
+const TEXT_MUTED = '#8e8aa3';
+const TOOLTIP_BG = '#22202d';
+const TOOLTIP_BORDER = 'rgba(255,255,255,0.12)';
+const SURFACE_BORDER = '#1a1924';
+
+const POS = '#4ade80';
+const NEG = '#f87171';
+const ACCENT = '#a07dff';
 
 function getChartColors(count) {
-    const palette = [
-        '#d7c4f2','#ffd6cc','#c8e6c9','#ffe4cc','#e1bee7',
-        '#b2ebf2','#ffccbc','#c5cae9','#f8bbd0','#cfd8dc',
-        '#ede7f6','#b2ebf2','#ffcdd2','#bbdefb','#dcedc8',
-    ];
     const colors = [];
-    for (let i = 0; i < count; i++) colors.push(palette[i % palette.length]);
+    for (let i = 0; i < count; i++) colors.push(DARK_PALETTE[i % DARK_PALETTE.length]);
     return colors;
+}
+
+function tooltipConfig(currency) {
+    return {
+        backgroundColor: TOOLTIP_BG,
+        titleColor: '#f4f2fa',
+        bodyColor: '#f4f2fa',
+        borderColor: TOOLTIP_BORDER,
+        borderWidth: 1,
+        cornerRadius: 8,
+        titleFont: chartFont,
+        bodyFont: chartFont,
+        padding: 10,
+        displayColors: true,
+        boxPadding: 4,
+    };
 }
 
 function renderPieChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#4a4458';
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: data.map(d => `${d.category_icon || ''} ${d.category_name}`),
             datasets: [{
                 data: data.map(d => parseFloat(d.total)),
-                backgroundColor: data.map(d => d.category_color || '#d7c4f2'),
+                backgroundColor: data.map((d, i) => d.category_color || DARK_PALETTE[i % DARK_PALETTE.length]),
                 borderWidth: 2,
-                borderColor: isDark ? '#2d2640' : '#ffffff',
+                borderColor: SURFACE_BORDER,
                 hoverBorderWidth: 3,
                 hoverOffset: 8,
             }],
         },
         options: {
             responsive: true,
-            cutout: '55%',
+            cutout: '62%',
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 14, font: { ...chartFont, size: 12 }, color: textColor, usePointStyle: true, pointStyle: 'circle' } },
+                legend: { position: 'bottom', labels: { padding: 14, font: chartFont, color: TEXT_COLOR, usePointStyle: true, pointStyle: 'circle' } },
                 tooltip: {
-                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
-                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
-                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
-                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
-                    borderWidth: 2,
-                    cornerRadius: 12,
-                    titleFont: chartFont,
-                    bodyFont: chartFont,
-                    padding: 10,
+                    ...tooltipConfig(currency),
                     callbacks: {
                         label: ctx => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
@@ -65,9 +77,6 @@ function renderPieChart(canvasId, data, currency = 'USD') {
 function renderBarChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#4a4458';
-    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'bar',
         data: {
@@ -76,19 +85,19 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
                 {
                     label: 'Income',
                     data: monthlyData.map(d => parseFloat(d.income)),
-                    backgroundColor: 'rgba(200, 230, 201, 0.6)',
-                    borderColor: '#a5d6a7',
-                    borderWidth: 2,
-                    borderRadius: 10,
+                    backgroundColor: 'rgba(74, 222, 128, 0.45)',
+                    borderColor: POS,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
                     borderSkipped: false,
                 },
                 {
                     label: 'Expenses',
                     data: monthlyData.map(d => parseFloat(d.expense)),
-                    backgroundColor: 'rgba(255, 205, 210, 0.6)',
-                    borderColor: '#ef9a9a',
-                    borderWidth: 2,
-                    borderRadius: 10,
+                    backgroundColor: 'rgba(248, 113, 113, 0.45)',
+                    borderColor: NEG,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
                     borderSkipped: false,
                 },
             ],
@@ -98,27 +107,19 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
-                    grid: { color: gridColor, drawBorder: false },
-                    border: { dash: [4, 4] },
+                    ticks: { callback: v => formatCurrency(v, currency), color: TEXT_MUTED, font: chartFont },
+                    grid: { color: GRID_COLOR, drawBorder: false },
+                    border: { display: false },
                 },
                 x: {
-                    ticks: { color: textColor, font: chartFont },
+                    ticks: { color: TEXT_MUTED, font: chartFont },
                     grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true, pointStyle: 'rectRounded' } },
+                legend: { position: 'bottom', labels: { color: TEXT_COLOR, font: chartFont, usePointStyle: true, pointStyle: 'rectRounded' } },
                 tooltip: {
-                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
-                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
-                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
-                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
-                    borderWidth: 2,
-                    cornerRadius: 12,
-                    titleFont: chartFont,
-                    bodyFont: chartFont,
-                    padding: 10,
+                    ...tooltipConfig(currency),
                     callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` },
                 },
             },
@@ -129,9 +130,6 @@ function renderBarChart(canvasId, monthlyData, currency = 'USD') {
 function renderLineChart(canvasId, monthlyData, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#4a4458';
-    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -139,16 +137,16 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
             datasets: [{
                 label: 'Net Income',
                 data: monthlyData.map(d => parseFloat(d.net || (d.income - d.expense))),
-                borderColor: '#d7c4f2',
-                backgroundColor: 'rgba(215, 196, 242, 0.15)',
+                borderColor: ACCENT,
+                backgroundColor: 'rgba(160, 125, 255, 0.15)',
                 fill: true,
                 tension: 0.4,
                 borderWidth: 2.5,
-                pointRadius: 6,
-                pointBackgroundColor: '#d7c4f2',
-                pointBorderColor: isDark ? '#2d2640' : '#ffffff',
-                pointBorderWidth: 2.5,
-                pointHoverRadius: 9,
+                pointRadius: 5,
+                pointBackgroundColor: ACCENT,
+                pointBorderColor: SURFACE_BORDER,
+                pointBorderWidth: 2,
+                pointHoverRadius: 8,
                 pointStyle: 'circle',
             }],
         },
@@ -156,27 +154,19 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
             responsive: true,
             scales: {
                 y: {
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
-                    grid: { color: gridColor, drawBorder: false },
-                    border: { dash: [4, 4] },
+                    ticks: { callback: v => formatCurrency(v, currency), color: TEXT_MUTED, font: chartFont },
+                    grid: { color: GRID_COLOR, drawBorder: false },
+                    border: { display: false },
                 },
                 x: {
-                    ticks: { color: textColor, font: chartFont },
+                    ticks: { color: TEXT_MUTED, font: chartFont },
                     grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true } },
+                legend: { position: 'bottom', labels: { color: TEXT_COLOR, font: chartFont, usePointStyle: true } },
                 tooltip: {
-                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
-                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
-                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
-                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
-                    borderWidth: 2,
-                    cornerRadius: 12,
-                    titleFont: chartFont,
-                    bodyFont: chartFont,
-                    padding: 10,
+                    ...tooltipConfig(currency),
                     callbacks: { label: ctx => ` Net: ${formatCurrency(ctx.parsed.y, currency)}` },
                 },
             },
@@ -187,9 +177,6 @@ function renderLineChart(canvasId, monthlyData, currency = 'USD') {
 function renderTrendChart(canvasId, data, currency = 'USD') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#c2c7d0' : '#4a4458';
-    const gridColor = isDark ? 'rgba(225,190,231,0.08)' : 'rgba(215,196,242,0.2)';
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -198,31 +185,30 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
                 {
                     label: 'Income',
                     data: data.map(d => parseFloat(d.income)),
-                    borderColor: '#c8e6c9',
-                    backgroundColor: 'rgba(200, 230, 201, 0.1)',
+                    borderColor: POS,
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
                     fill: false,
                     tension: 0.4,
                     borderWidth: 2.5,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#c8e6c9',
-                    pointBorderColor: isDark ? '#2d2640' : '#ffffff',
+                    pointRadius: 4,
+                    pointBackgroundColor: POS,
+                    pointBorderColor: SURFACE_BORDER,
                     pointBorderWidth: 2,
-                    pointHoverRadius: 8,
-                    borderDash: [],
+                    pointHoverRadius: 7,
                 },
                 {
                     label: 'Expenses',
                     data: data.map(d => parseFloat(d.expense)),
-                    borderColor: '#ffcdd2',
-                    backgroundColor: 'rgba(255, 205, 210, 0.1)',
+                    borderColor: NEG,
+                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
                     fill: false,
                     tension: 0.4,
                     borderWidth: 2.5,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#ffcdd2',
-                    pointBorderColor: isDark ? '#2d2640' : '#ffffff',
+                    pointRadius: 4,
+                    pointBackgroundColor: NEG,
+                    pointBorderColor: SURFACE_BORDER,
                     pointBorderWidth: 2,
-                    pointHoverRadius: 8,
+                    pointHoverRadius: 7,
                 },
             ],
         },
@@ -231,27 +217,19 @@ function renderTrendChart(canvasId, data, currency = 'USD') {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => formatCurrency(v, currency), color: textColor, font: chartFont },
-                    grid: { color: gridColor, drawBorder: false },
-                    border: { dash: [4, 4] },
+                    ticks: { callback: v => formatCurrency(v, currency), color: TEXT_MUTED, font: chartFont },
+                    grid: { color: GRID_COLOR, drawBorder: false },
+                    border: { display: false },
                 },
                 x: {
-                    ticks: { color: textColor, font: chartFont },
+                    ticks: { color: TEXT_MUTED, font: chartFont },
                     grid: { display: false },
                 },
             },
             plugins: {
-                legend: { position: 'bottom', labels: { color: textColor, font: chartFont, usePointStyle: true } },
+                legend: { position: 'bottom', labels: { color: TEXT_COLOR, font: chartFont, usePointStyle: true } },
                 tooltip: {
-                    backgroundColor: isDark ? '#2d2640' : '#fffbfe',
-                    titleColor: isDark ? '#e8e0f0' : '#4a4458',
-                    bodyColor: isDark ? '#e8e0f0' : '#4a4458',
-                    borderColor: isDark ? '#e1bee7' : '#d7c4f2',
-                    borderWidth: 2,
-                    cornerRadius: 12,
-                    titleFont: chartFont,
-                    bodyFont: chartFont,
-                    padding: 10,
+                    ...tooltipConfig(currency),
                     callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, currency)}` },
                 },
             },
