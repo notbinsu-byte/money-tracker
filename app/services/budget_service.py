@@ -19,6 +19,9 @@ def get_budget_summary(db: Session, year: int, month: int) -> list[dict]:
         .all()
     )
 
+    cat_ids = {b.category_id for b in budgets}
+    cat_map = {c.id: c for c in db.query(Category).filter(Category.id.in_(cat_ids)).all()} if cat_ids else {}
+
     summaries = []
     for budget in budgets:
         budget_currency = budget.currency or "USD"
@@ -37,7 +40,7 @@ def get_budget_summary(db: Session, year: int, month: int) -> list[dict]:
         remaining = budget.amount - spent
         percentage = float(spent / budget.amount * 100) if budget.amount > 0 else 0
 
-        cat = db.query(Category).filter(Category.id == budget.category_id).first()
+        cat = cat_map.get(budget.category_id)
         summaries.append({
             "budget_id": budget.id,
             "category_id": budget.category_id,

@@ -19,9 +19,11 @@ def list_budgets(
     if month is not None:
         query = query.filter((Budget.month == month) | (Budget.month.is_(None)))
     budgets = query.all()
+    cat_ids = {b.category_id for b in budgets}
+    cat_map = {c.id: c for c in db.query(Category).filter(Category.id.in_(cat_ids)).all()} if cat_ids else {}
     result = []
     for b in budgets:
-        cat = db.query(Category).filter(Category.id == b.category_id).first()
+        cat = cat_map.get(b.category_id)
         result.append(BudgetResponse(
             id=b.id,
             category_id=b.category_id,

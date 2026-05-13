@@ -5,7 +5,7 @@
  * ============================================================ */
 
 /* ---------- Design Tokens (dark, default) ---------- */
-:root, [data-theme="light"], [data-theme="dark"] {
+:root, [data-theme="dark"] {
   /* Surfaces */
   --bg-app: #0c0b10;
   --bg-canvas: #131319;
@@ -125,6 +125,10 @@
   --rose-dark: #e8a4bd;
   --nav-brand-color: var(--accent-300);
 
+  /* Aliases referenced by inline styles in some templates */
+  --primary: var(--accent-400);
+  --text-muted: var(--text-3);
+
   /* Type scale */
   --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-base: 14px;
   --fs-lg: 16px; --fs-xl: 18px; --fs-2xl: 22px; --fs-3xl: 28px;
@@ -140,10 +144,48 @@
   --dur-slow: 280ms;
 }
 
+/* ---------- Light theme overrides ---------- */
+[data-theme="light"] {
+  /* Surfaces */
+  --bg-app: #f7f5fb;
+  --bg-canvas: #ffffff;
+  --bg-elev-1: #ffffff;
+  --bg-elev-2: #f1edf7;
+  --bg-elev-3: #ffffff;
+  --bg-overlay: rgba(20,16,32,.04);
+  --bg-overlay-hover: rgba(20,16,32,.06);
+  --bg-overlay-active: rgba(20,16,32,.10);
+
+  /* Borders */
+  --border-faint: rgba(20,16,32,.06);
+  --border-subtle: rgba(20,16,32,.10);
+  --border-default: rgba(20,16,32,.14);
+  --border-strong: rgba(20,16,32,.22);
+
+  /* Text */
+  --text-1: #1a1024;
+  --text-2: #4a4458;
+  --text-3: #74708a;
+  --text-4: #a8a4be;
+  --text-on-accent: #ffffff;
+
+  /* Accent stays the same lavender family — slightly darker for contrast */
+  --accent-400: #7350de;
+  --accent-300: #8862f0;
+  --accent-glow: rgba(115,80,222,.16);
+
+  /* Semantic — slightly darker variants for contrast on light bg */
+  --pos: #16a34a;  --pos-bg: rgba(22,163,74,.10);   --pos-border: rgba(22,163,74,.24);
+  --neg: #dc2626;  --neg-bg: rgba(220,38,38,.08);   --neg-border: rgba(220,38,38,.22);
+  --warn: #d97706; --warn-bg: rgba(217,119,6,.10);  --warn-border: rgba(217,119,6,.24);
+  --info: #2563eb; --info-bg: rgba(37,99,235,.08);  --info-border: rgba(37,99,235,.22);
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
 html { background: var(--bg-app); color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
 
 body {
   background: var(--bg-app) !important;
@@ -204,7 +246,7 @@ body::after {
 
 /* ---------- Top Nav ---------- */
 .main-nav {
-  background: rgba(19,19,25,.85);
+  background: color-mix(in srgb, var(--bg-canvas) 88%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);

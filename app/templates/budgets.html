@@ -95,7 +95,7 @@ async function loadBudgets() {
             const pct = Math.min(parseFloat(b.percentage) || 0, 100);
             const progressClass = pct >= 100 ? 'progress-red' : pct >= 80 ? 'progress-yellow' : 'progress-green';
             const badgeBg = pct >= 100 ? 'rgba(239,154,154,0.2)' : pct >= 80 ? 'rgba(255,224,178,0.3)' : 'rgba(165,214,167,0.2)';
-            const badgeColor = pct >= 100 ? 'var(--rose-dark)' : pct >= 80 ? '#e65100' : 'var(--sage-dark)';
+            const badgeColor = pct >= 100 ? 'var(--neg)' : pct >= 80 ? 'var(--warn)' : 'var(--pos)';
             const badgeBorder = pct >= 100 ? 'rgba(239,154,154,0.4)' : pct >= 80 ? 'rgba(255,183,77,0.4)' : 'rgba(165,214,167,0.4)';
             const status = b.percentage >= 100 ? 'Over budget!' : b.percentage >= 80 ? 'Near limit' : 'On track';
             return `<article>

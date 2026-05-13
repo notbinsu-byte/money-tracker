@@ -114,7 +114,12 @@ def import_transactions(db: Session, rows: list[dict]) -> int:
         base = settings.BASE_CURRENCY
         if currency != base:
             rate = get_cached_rate(db, base, currency)
-            amount_in_base = round(amount / rate, 2) if rate else amount
+            if not rate:
+                raise ValueError(
+                    f"No exchange rate cached for {base}->{currency}. "
+                    "Refresh rates via /api/v1/currencies/refresh and re-import."
+                )
+            amount_in_base = round(amount / rate, 2)
         else:
             amount_in_base = amount
         t = Transaction(

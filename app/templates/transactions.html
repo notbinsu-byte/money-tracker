@@ -211,21 +211,25 @@ async function loadTransactions() {
 
         container.innerHTML = sortedKeys.map(date => {
             const items = groups[date];
-            // Per-day net by primary currency
+            // Per-day net per currency — show all currencies present so mixed days are unambiguous
             const totals = {};
             items.forEach(t => {
                 const cur = t.currency || 'USD';
                 if (!totals[cur]) totals[cur] = 0;
                 totals[cur] += (t.type === 'income' ? 1 : -1) * parseFloat(t.amount);
             });
-            const primary = Object.keys(totals)[0];
-            const dayNet = totals[primary];
-            const dayClass = dayNet >= 0 ? 'pos' : 'neg';
+            const currencyKeys = Object.keys(totals).sort();
+            const netParts = currencyKeys.map(cur => {
+                const net = totals[cur];
+                const sign = net >= 0 ? '+' : '−';
+                const color = net >= 0 ? 'var(--pos)' : 'var(--text-3)';
+                return `<span style="color:${color};">${escapeHtml(cur)} ${sign}${formatCurrency(Math.abs(net), cur)}</span>`;
+            }).join('<span style="color:var(--text-4);margin:0 6px;">·</span>');
 
             return `<div style="margin-bottom:24px;">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;margin-bottom:6px;border-bottom:1px solid var(--border-subtle);">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;margin-bottom:6px;border-bottom:1px solid var(--border-subtle);gap:12px;flex-wrap:wrap;">
                     <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;font-weight:500;">${escapeHtml(formatDayHeader(date))}</span>
-                    <span style="font-size:12px;color:var(--${dayClass === 'pos' ? 'pos' : 'text-3'});font-variant-numeric:tabular-nums;">${dayNet >= 0 ? '+' : '−'}${formatCurrency(Math.abs(dayNet), primary)}</span>
+                    <span style="font-size:12px;font-variant-numeric:tabular-nums;">${netParts}</span>
                 </div>
                 <div style="background:var(--bg-elev-1);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;">
                     ${items.map((t, i) => {
