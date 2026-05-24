@@ -109,8 +109,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 heroCurrency = btn.dataset.currency;
                 renderHero(totals);
                 renderSummaryCards(totals);
+                syncChartCurrency(heroCurrency);
             });
         });
+    }
+
+    function syncChartCurrency(currency) {
+        const pieSelect = document.getElementById('pie-currency-select');
+        if (pieSelect && [...pieSelect.options].some(o => o.value === currency) && pieSelect.value !== currency) {
+            pieSelect.value = currency;
+            renderPieForCurrency(currency);
+        }
+        const trendSelect = document.getElementById('trend-currency-select');
+        if (trendSelect && [...trendSelect.options].some(o => o.value === currency) && trendSelect.value !== currency) {
+            trendSelect.value = currency;
+            renderTrendForCurrency(currency);
+        }
     }
 
     function renderSummaryCards(totals) {
