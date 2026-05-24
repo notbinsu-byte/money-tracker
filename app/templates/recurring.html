@@ -46,8 +46,7 @@
                 </label>
                 <label>
                     Currency
-                    <input type="text" id="rec-currency" value="USD" maxlength="3" pattern="[A-Z]{3}" required
-                           style="text-transform:uppercase;" placeholder="USD">
+                    <select id="rec-currency" required></select>
                 </label>
                 <label>
                     Category
@@ -81,9 +80,27 @@ let recCategories = [];
 document.addEventListener('DOMContentLoaded', async () => {
     recCategories = await api.get('/api/v1/categories');
     loadRecCategories();
+    await loadRecCurrencies();
     loadRecurring();
     document.getElementById('rec-start').value = new Date().toISOString().split('T')[0];
 });
+
+async function loadRecCurrencies() {
+    try {
+        const data = await api.get('/api/v1/currencies');
+        const select = document.getElementById('rec-currency');
+        select.innerHTML = '';
+        data.currencies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            if (c === data.base) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch(e) {
+        document.getElementById('rec-currency').innerHTML = '<option value="USD">USD</option>';
+    }
+}
 
 function loadRecCategories() {
     const type = document.getElementById('rec-type').value;

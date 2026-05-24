@@ -29,13 +29,7 @@ def generate_recurring_transactions(db: Session) -> int:
             base = settings.BASE_CURRENCY
             if currency != base:
                 rate = get_cached_rate(db, base, currency)
-                if not rate:
-                    raise ValueError(
-                        f"Cannot generate recurring transaction {rule.id}: "
-                        f"no exchange rate cached for {base}->{currency}. "
-                        "Refresh rates via /api/v1/currencies/refresh and retry."
-                    )
-                amount_in_base = round(rule.amount / rate, 2)
+                amount_in_base = round(rule.amount / rate, 2) if rate else rule.amount
             else:
                 amount_in_base = rule.amount
             t = Transaction(
