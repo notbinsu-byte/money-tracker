@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const switcher = currencies.length > 1
             ? `<div class="hero-currency-switch">${currencies.map(c =>
-                  `<button type="button" data-currency="${escapeHtml(c)}"${c === heroCurrency ? ' class="active"' : ''}>${escapeHtml(c)}</button>`
+                  `<button type="button" data-currency="${escapeHtml(c)}" class="currency-pill${c === heroCurrency ? ' active' : ''}">${escapeHtml(c)}</button>`
               ).join('')}</div>`
             : '';
 
