@@ -817,13 +817,48 @@ footer small { color: var(--text-3); }
   background: radial-gradient(circle, var(--accent-glow), transparent 60%);
   pointer-events: none;
 }
+.hero-net-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
 .hero-net-label {
   font-size: var(--fs-sm);
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 500;
-  margin-bottom: 8px;
+}
+.hero-currency-switch {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 3px;
+  position: relative;
+}
+.hero-currency-switch button {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  font-variant-numeric: tabular-nums;
+}
+.hero-currency-switch button:hover { color: var(--text-1); }
+.hero-currency-switch button.active {
+  background: var(--accent-300);
+  color: var(--bg-base);
 }
 .hero-net-value {
   font-size: 56px;

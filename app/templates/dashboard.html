@@ -59,11 +59,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let summaryData = null;
     let trendData = null;
+    let heroCurrency = null;
 
     function renderHero(totals) {
         const el = document.getElementById('hero-net-section');
         const currencies = Object.keys(totals);
         if (currencies.length === 0) {
+            heroCurrency = null;
             el.innerHTML = `
                 <div class="hero-net">
                     <div class="hero-net-label">Net savings · ${periodLabel}</div>
@@ -72,9 +74,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>`;
             return;
         }
-        // Use the first currency (USD if available) for hero
-        const primary = currencies.includes('USD') ? 'USD' : currencies[0];
-        const t = totals[primary];
+        if (!heroCurrency || !currencies.includes(heroCurrency)) {
+            heroCurrency = currencies.includes('USD') ? 'USD' : currencies[0];
+        }
+        const t = totals[heroCurrency];
         const net = parseFloat(t.net) || 0;
         const income = parseFloat(t.income) || 0;
         const expense = parseFloat(t.expense) || 0;
@@ -82,24 +85,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sign = net >= 0 ? '+' : '−';
         const absNet = Math.abs(net);
 
+        const switcher = currencies.length > 1
+            ? `<div class="hero-currency-switch">${currencies.map(c =>
+                  `<button type="button" data-currency="${escapeHtml(c)}"${c === heroCurrency ? ' class="active"' : ''}>${escapeHtml(c)}</button>`
+              ).join('')}</div>`
+            : '';
+
         el.innerHTML = `
             <div class="hero-net">
-                <div class="hero-net-label">Net savings · ${escapeHtml(periodLabel)} · ${escapeHtml(primary)}</div>
-                <div class="hero-net-value ${netClass}">${sign}${formatCurrency(absNet, primary).replace(/^[^\d-]*/, '')}</div>
+                <div class="hero-net-top">
+                    <div class="hero-net-label">Net savings · ${escapeHtml(periodLabel)} · ${escapeHtml(heroCurrency)}</div>
+                    ${switcher}
+                </div>
+                <div class="hero-net-value ${netClass}">${sign}${formatCurrency(absNet, heroCurrency).replace(/^[^\d-]*/, '')}</div>
                 <div class="hero-net-meta">
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pos);margin-right:6px;"></span>+${formatCurrency(income, primary)} income</span>
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--neg);margin-right:6px;"></span>−${formatCurrency(expense, primary)} spent</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pos);margin-right:6px;"></span>+${formatCurrency(income, heroCurrency)} income</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--neg);margin-right:6px;"></span>−${formatCurrency(expense, heroCurrency)} spent</span>
                 </div>
             </div>`;
+
+        el.querySelectorAll('.hero-currency-switch button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                heroCurrency = btn.dataset.currency;
+                renderHero(totals);
+                renderSummaryCards(totals);
+            });
+        });
     }
 
     function renderSummaryCards(totals) {
         const container = document.getElementById('summary-cards');
-        const currencies = Object.keys(totals);
+        const currencies = Object.keys(totals).filter(c => c !== heroCurrency);
         if (currencies.length === 0) { container.innerHTML = ''; return; }
-        // Show secondary currencies as compact strip if more than one
-        if (currencies.length === 1) { container.innerHTML = ''; return; }
-        container.innerHTML = `<div class="grid">` + currencies.slice(1).map(cur => {
+        container.innerHTML = `<div class="grid">` + currencies.map(cur => {
             const t = totals[cur];
             const net = parseFloat(t.net) || 0;
             const netColor = net >= 0 ? 'var(--pos)' : 'var(--neg)';
