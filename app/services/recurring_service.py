@@ -14,14 +14,15 @@ def generate_recurring_transactions(db: Session) -> int:
     count = 0
 
     for rule in active:
-        if rule.end_date and rule.end_date < today:
-            rule.is_active = False
-            continue
-
         next_date = rule.last_generated or rule.start_date
         if rule.last_generated:
             next_date = _next_occurrence(next_date, rule.frequency)
 
+        # Generate every occurrence that is due (on or before today) and still
+        # within the rule's end_date. Note: we deliberately do NOT skip a rule
+        # just because its end_date has passed — a final occurrence falling on
+        # the end_date (e.g. end_date == today - 1) must still be generated
+        # before the rule is deactivated below.
         while next_date <= today:
             if rule.end_date and next_date > rule.end_date:
                 break
@@ -46,6 +47,11 @@ def generate_recurring_transactions(db: Session) -> int:
             rule.last_generated = next_date
             count += 1
             next_date = _next_occurrence(next_date, rule.frequency)
+
+        # Deactivate once the rule has run past its end_date (after generating
+        # any final on-date occurrence above).
+        if rule.end_date and next_date > rule.end_date:
+            rule.is_active = False
 
     db.commit()
     return count
