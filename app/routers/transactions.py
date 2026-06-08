@@ -36,7 +36,7 @@ def _to_response(t: Transaction) -> dict:
 def list_transactions(
     search: str | None = None,
     category_id: int | None = None,
-    type: str | None = None,
+    type: str | None = Query(default=None, pattern="^(expense|income)$"),
     date_from: date | None = None,
     date_to: date | None = None,
     amount_min: Decimal | None = None,

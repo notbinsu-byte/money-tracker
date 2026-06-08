@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/budgets", tags=["budgets"])
 @router.get("", response_model=list[BudgetResponse])
 def list_budgets(
     year: int = Query(default_factory=lambda: date.today().year),
-    month: int | None = None,
+    month: int | None = Query(default=None, ge=1, le=12),
     db: Session = Depends(get_db),
 ):
     query = db.query(Budget).filter(Budget.year == year)
@@ -65,7 +65,7 @@ def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
 @router.get("/summary", response_model=list[BudgetSummary])
 def budget_summary(
     year: int = Query(default_factory=lambda: date.today().year),
-    month: int = Query(default_factory=lambda: date.today().month),
+    month: int = Query(default_factory=lambda: date.today().month, ge=1, le=12),
     db: Session = Depends(get_db),
 ):
     return get_budget_summary(db, year, month)

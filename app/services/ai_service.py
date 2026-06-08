@@ -177,7 +177,7 @@ def execute_tool(tool_name: str, tool_input: dict, db: Session):
         return _serialize(result)
 
     elif tool_name == "get_recent_transactions":
-        limit = min(tool_input.get("limit", 10), 50)
+        limit = max(1, min(int(tool_input.get("limit") or 10), 50))
         txns = (
             db.query(Transaction)
             .order_by(Transaction.date.desc(), Transaction.created_at.desc())
@@ -220,7 +220,7 @@ def execute_tool(tool_name: str, tool_input: dict, db: Session):
             query = query.filter(Transaction.amount >= tool_input["amount_min"])
         if tool_input.get("amount_max") is not None:
             query = query.filter(Transaction.amount <= tool_input["amount_max"])
-        limit = min(tool_input.get("limit", 20), 100)
+        limit = max(1, min(int(tool_input.get("limit") or 20), 100))
         txns = query.order_by(Transaction.date.desc()).limit(limit).all()
         return _serialize([
             {

@@ -130,6 +130,10 @@ async function previewFile() {
 async function importCSV() {
     const file = document.getElementById('csv-file').files[0];
     if (!file) return;
+    const btn = document.getElementById('import-btn');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     document.getElementById('import-errors').style.display = 'none';
     const formData = new FormData();
     formData.append('file', file);
@@ -154,6 +158,9 @@ async function importCSV() {
         }
     } catch(e) {
         notify('Import failed', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
     }
 }
 </script>
